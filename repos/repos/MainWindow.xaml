@@ -52,12 +52,15 @@
                         <TextBlock Text="Pauta de Avaliação" VerticalAlignment="Center"/>
                     </StackPanel>
                 </Button>
+                <!-- BOTÃO CONFIGURAÇÕES COMENTADO -->
+                <!--
                 <Button x:Name="ConfiguracoesButton" Click="ConfiguracoesButton_Click" HorizontalAlignment="Stretch" Margin="0,5" Padding="10,5" Foreground="White" Background="#FF4A4A4A" BorderThickness="0">
                     <StackPanel Orientation="Horizontal">
                         <TextBlock Text=" सेटिंग्ज" FontFamily="Segoe MDL2 Assets" Margin="0,0,10,0" VerticalAlignment="Center"/>
                         <TextBlock Text="Configurações" VerticalAlignment="Center"/>
                     </StackPanel>
                 </Button>
+                -->
             </StackPanel>
         </Border>
 
