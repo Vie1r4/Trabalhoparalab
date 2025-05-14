@@ -14,6 +14,7 @@
             <ColumnDefinition Width="*"/>
         </Grid.ColumnDefinitions>
 
+        <!-- Coluna Esquerda (Menu) -->
         <Border Grid.Column="0" Background="#FF333333">
             <StackPanel Margin="10">
                 <Button x:Name="MainMenuPerfilButton" Click="MainMenuPerfilButton_Click" HorizontalAlignment="Stretch" Margin="0,5" Padding="10,5" Foreground="White" Background="#FF4A4A4A" BorderThickness="0">
@@ -52,7 +53,7 @@
                         <TextBlock Text="Pauta de Avaliação" VerticalAlignment="Center"/>
                     </StackPanel>
                 </Button>
-                <!-- BOTÃO CONFIGURAÇÕES COMENTADO -->
+                <!-- O botão Configurações foi comentado anteriormente, mantendo assim -->
                 <!--
                 <Button x:Name="ConfiguracoesButton" Click="ConfiguracoesButton_Click" HorizontalAlignment="Stretch" Margin="0,5" Padding="10,5" Foreground="White" Background="#FF4A4A4A" BorderThickness="0">
                     <StackPanel Orientation="Horizontal">
@@ -64,12 +65,17 @@
             </StackPanel>
         </Border>
 
+        <!-- Coluna Direita (Conteúdo Principal) -->
         <Grid Grid.Column="1" Margin="20">
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto"/>
+                <!-- TopBarGrid -->
                 <RowDefinition Height="Auto"/>
+                <!-- SummaryBoxesStackPanel -->
                 <RowDefinition Height="Auto"/>
+                <!-- Botões Criar Tarefa / Adicionar Aluno -->
                 <RowDefinition Height="*"/>
+                <!-- MainContentArea -->
             </Grid.RowDefinitions>
 
             <Grid x:Name="TopBarGrid" Grid.Row="0" Margin="0,0,0,20">
@@ -85,13 +91,11 @@
                 <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
                     <TextBlock Text="" FontFamily="Segoe MDL2 Assets" FontSize="20" Margin="0,0,15,0" VerticalAlignment="Center"/>
                     <TextBlock Text="⚡" FontFamily="Segoe MDL2 Assets" FontSize="20" Margin="0,0,15,0" VerticalAlignment="Center"/>
-                    <!-- NOVO: TextBlock para o nome do utilizador -->
                     <TextBlock x:Name="TopBarUserNameTextBlock" 
                                Text="Nome do Utilizador" 
                                VerticalAlignment="Center" 
                                FontWeight="SemiBold"
                                Margin="0,0,5,0"/>
-
                 </StackPanel>
             </Grid>
 
@@ -109,7 +113,11 @@
 
             <Button x:Name="CriarTarefaButton" Click="CriarTarefaButton_Click" Grid.Row="2" Content="Criar Tarefa"
                     HorizontalAlignment="Right" Margin="0,0,0,20" Background="#FF0078D4" Foreground="White"
-                    Padding="15,8" BorderThickness="0"/>
+                    Padding="15,8" BorderThickness="0" Visibility="Collapsed"/>
+
+            <Button x:Name="AdicionarAlunoButton" Click="AdicionarAlunoButton_Click" Grid.Row="2" Content="Adicionar Aluno"
+                    HorizontalAlignment="Right" Margin="0,0,0,20" Background="#FF0078D4" Foreground="White"
+                    Padding="15,8" BorderThickness="0" Visibility="Collapsed"/>
 
             <ContentControl x:Name="MainContentArea" Grid.Row="3"/>
         </Grid>

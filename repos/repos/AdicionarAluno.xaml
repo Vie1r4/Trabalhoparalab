@@ -1,0 +1,61 @@
+﻿<Window x:Class="FinalLab.AdicionarAluno"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:FinalLab"
+        mc:Ignorable="d"
+        Title="Adicionar Novo Aluno" Height="480" Width="350"
+        WindowStartupLocation="CenterOwner" ResizeMode="NoResize" ShowInTaskbar="False">
+
+    <!-- O conteúdo da Window DEVE ser um único elemento filho. Normalmente um Grid. -->
+    <Grid Margin="20">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <!-- 0: Nome Label -->
+            <RowDefinition Height="Auto"/>
+            <!-- 1: Nome TextBox -->
+            <RowDefinition Height="Auto"/>
+            <!-- 2: Número Label -->
+            <RowDefinition Height="Auto"/>
+            <!-- 3: Número TextBox -->
+            <RowDefinition Height="Auto"/>
+            <!-- 4: Email Label -->
+            <RowDefinition Height="Auto"/>
+            <!-- 5: Email TextBox -->
+            <RowDefinition Height="Auto"/>
+            <!-- 6: Grupo Label -->
+            <RowDefinition Height="Auto"/>
+            <!-- 7: Grupo Info/TextBox -->
+            <RowDefinition Height="*"/>
+            <!-- 8: Espaço -->
+            <RowDefinition Height="Auto"/>
+            <!-- 9: Botões -->
+        </Grid.RowDefinitions>
+
+        <!-- Campos para Nome Completo -->
+        <TextBlock Grid.Row="0" Text="Nome Completo:" Margin="0,0,0,5"/>
+        <TextBox Grid.Row="1" x:Name="NomeCompletoTextBox" Margin="0,0,0,10"/>
+
+        <!-- Campos para Número do Aluno -->
+        <TextBlock Grid.Row="2" Text="Número do Aluno:" Margin="0,0,0,5"/>
+        <TextBox Grid.Row="3" x:Name="NumeroAlunoTextBox" Margin="0,0,0,10"/>
+
+        <!-- Campos para Email -->
+        <TextBlock Grid.Row="4" Text="Email:" Margin="0,0,0,5"/>
+        <TextBox Grid.Row="5" x:Name="EmailTextBox" Margin="0,0,0,10"/>
+
+        <!-- Campo para Grupo (informativo por agora) -->
+        <TextBlock Grid.Row="6" Text="Grupo:" Margin="0,0,0,5"/>
+        <TextBlock Grid.Row="7" x:Name="GrupoInfoTextBlock" Text="Será atribuído posteriormente" Margin="0,0,0,10" FontStyle="Italic" Foreground="Gray"/>
+        <!-- Se preferir um TextBox desabilitado para o futuro:
+        <TextBox Grid.Row="7" x:Name="GrupoTextBox" Margin="0,0,0,10" IsEnabled="False" Text="Será atribuído posteriormente"/>
+        -->
+
+        <!-- Botões Guardar e Cancelar -->
+        <StackPanel Grid.Row="9" Orientation="Horizontal" HorizontalAlignment="Right">
+            <Button Content="Guardar" Width="100" Margin="0,0,10,0" Click="GuardarButton_Click"/>
+            <Button Content="Cancelar" Width="100" Click="CancelarButton_Click" IsCancel="True"/>
+        </StackPanel>
+    </Grid>
+</Window>
