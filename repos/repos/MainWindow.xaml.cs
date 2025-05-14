@@ -3,30 +3,32 @@ using System.Collections.Generic;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
-// using System.Text.RegularExpressions; // Não é usado diretamente aqui
+using Microsoft.Win32; // Para OpenFileDialog
+using System.IO; // Para System.IO.File e Path
+// using System.Text.RegularExpressions; // Não é estritamente necessário aqui, mas pode ter estado em uso
 
 namespace FinalLab
 {
-    // DEFINIÇÃO DA CLASSE ALUNO ATUALIZADA
+    // Definição da classe Aluno (como antes)
     public class Aluno
     {
         public string NomeCompleto { get; }
         public string NumeroAluno { get; }
         public string Email { get; }
-        public string? Grupo { get; set; } // NOVA PROPRIEDADE, anulável e com set
+        public string? Grupo { get; set; }
 
-        // Construtor atualizado
-        public Aluno(string nomeCompleto, string numeroAluno, string email, string? grupo = null) // Grupo é opcional no construtor
+        public Aluno(string nomeCompleto, string numeroAluno, string email, string? grupo = null)
         {
             NomeCompleto = nomeCompleto;
             NumeroAluno = numeroAluno;
             Email = email;
-            Grupo = grupo ?? "Sem Grupo"; // Valor padrão se não for fornecido
+            Grupo = grupo ?? "Sem Grupo";
         }
     }
 
     public partial class MainWindow : Window
     {
+        // ... (propriedades estáticas e listas como antes) ...
         public static string NomeUtilizadorLogado { get; set; } = "Utilizador Padrão";
         public static string EmailUtilizadorLogado { get; set; } = "exemplo@email.com";
         public static string? CaminhoFotoUtilizadorLogado { get; set; }
@@ -51,6 +53,7 @@ namespace FinalLab
             UpdateTopBarUserName();
         }
 
+        // ... (UpdateTopBarUserName, SetupTarefasView, SetupAlunosView como antes) ...
         public void UpdateTopBarUserName()
         {
             if (this.FindName("TopBarUserNameTextBlock") is TextBlock userNameLabel)
@@ -88,21 +91,20 @@ namespace FinalLab
             }
         }
 
-        private void SetupAlunosView() // ATUALIZADO PARA INCLUIR GRUPO
+        private void SetupAlunosView()
         {
             alunosViewContainer = new Border { BorderBrush = Brushes.LightGray, BorderThickness = new Thickness(1.0) };
             actualAlunosTableGrid = new Grid();
             actualAlunosTableGrid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
             actualAlunosTableGrid.RowDefinitions.Add(new RowDefinition { Height = new GridLength(1, GridUnitType.Star) });
 
-            // Colunas: Nome, Número, Email, Grupo, Ações (Turma foi removida, Grupo adicionado)
-            actualAlunosTableGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(2, GridUnitType.Star) });   // Nome
-            actualAlunosTableGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });   // Número
-            actualAlunosTableGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(2, GridUnitType.Star) });   // Email
-            actualAlunosTableGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1.5, GridUnitType.Star) }); // Grupo (NOVO)
-            actualAlunosTableGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });                         // Ações
+            actualAlunosTableGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(2, GridUnitType.Star) });
+            actualAlunosTableGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+            actualAlunosTableGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(2, GridUnitType.Star) });
+            actualAlunosTableGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1.5, GridUnitType.Star) });
+            actualAlunosTableGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
 
-            string[] headers = { "Nome Completo", "Nº Aluno", "Email", "Grupo", "Ações" }; // ATUALIZADO
+            string[] headers = { "Nome Completo", "Nº Aluno", "Email", "Grupo", "Ações" };
             for (int i = 0; i < headers.Length; i++)
             {
                 Border headerBorder = new Border { Background = new SolidColorBrush(Color.FromRgb(0xF0, 0xF0, 0xF0)), Padding = new Thickness(10.0) };
@@ -154,6 +156,8 @@ namespace FinalLab
 
             if (this.FindName("AdicionarAlunoButton") is Button adicionarAlunoBtn)
                 adicionarAlunoBtn.Visibility = showAlunosControls ? Visibility.Visible : Visibility.Collapsed;
+            if (this.FindName("InserirFicheiroAlunosButton") is Button inserirFicheiroBtn)
+                inserirFicheiroBtn.Visibility = showAlunosControls ? Visibility.Visible : Visibility.Collapsed;
 
             if (showCommonTopElements) UpdatePlaceholderVisibility();
             else if (this.FindName("PlaceholderTextBlock") is TextBlock placeholderTextBlock) placeholderTextBlock.Visibility = Visibility.Collapsed;
@@ -187,37 +191,12 @@ namespace FinalLab
             }
         }
 
-        private void MainMenuPerfilButton_Click(object sender, RoutedEventArgs e)
-        {
-            NavigateToPage(new Perfil());
-        }
-
-        private void DashboardButton_Click(object sender, RoutedEventArgs e)
-        {
-            NavigateToPage(tarefasViewContainer);
-        }
-
-        private void AlunosButton_Click(object sender, RoutedEventArgs e)
-        {
-            NavigateToPage(alunosViewContainer);
-        }
-
-        private void GruposButton_Click(object sender, RoutedEventArgs e)
-        {
-            MessageBox.Show("Grupos Clicado!");
-            NavigateToPage(null);
-        }
-
-        private void TarefasButton_Click(object sender, RoutedEventArgs e)
-        {
-            NavigateToPage(tarefasViewContainer);
-        }
-
-        private void PautaButton_Click(object sender, RoutedEventArgs e)
-        {
-            MessageBox.Show("Pauta Clicado!");
-            NavigateToPage(null);
-        }
+        private void MainMenuPerfilButton_Click(object sender, RoutedEventArgs e) { NavigateToPage(new Perfil()); }
+        private void DashboardButton_Click(object sender, RoutedEventArgs e) { NavigateToPage(tarefasViewContainer); }
+        private void AlunosButton_Click(object sender, RoutedEventArgs e) { NavigateToPage(alunosViewContainer); }
+        private void GruposButton_Click(object sender, RoutedEventArgs e) { MessageBox.Show("Grupos Clicado!"); NavigateToPage(null); }
+        private void TarefasButton_Click(object sender, RoutedEventArgs e) { NavigateToPage(tarefasViewContainer); }
+        private void PautaButton_Click(object sender, RoutedEventArgs e) { MessageBox.Show("Pauta Clicado!"); NavigateToPage(null); }
 
         private void CriarTarefaButton_Click(object sender, RoutedEventArgs e)
         {
@@ -304,6 +283,154 @@ namespace FinalLab
             }
         }
 
+        private void InserirFicheiroAlunosButton_Click(object sender, RoutedEventArgs e)
+        {
+            OpenFileDialog openFileDialog = new OpenFileDialog
+            {
+                Title = "Selecionar Ficheiro de Alunos",
+                Filter = "Ficheiros CSV (*.csv)|*.csv|Ficheiros Excel (*.xlsx)|*.xlsx|Todos os Ficheiros (*.*)|*.*",
+                FilterIndex = 1, // CSV selecionado por defeito (se for o segundo item, caso contrário ajuste)
+                                 // Se CSV é o primeiro, FilterIndex = 1. Se Excel é o primeiro e CSV o segundo, FilterIndex = 2.
+                                 // No nosso filtro, CSV é o primeiro, então FilterIndex = 1 (ou FilterIndex = 2 se quiser XLSX como default).
+                                 // Vamos assumir que quer CSV como primeiro e default:
+                                 // Filter = "Ficheiros CSV (*.csv)|*.csv|Ficheiros Excel (*.xlsx)|*.xlsx|Todos os Ficheiros (*.*)|*.*",
+                                 // FilterIndex = 1,
+                DefaultExt = ".csv",
+                CheckFileExists = true,
+                CheckPathExists = true
+            };
+
+            if (openFileDialog.ShowDialog() == true)
+            {
+                string filePath = openFileDialog.FileName;
+                string fileExtension = Path.GetExtension(filePath).ToLower();
+
+                try
+                {
+                    if (fileExtension == ".csv")
+                    {
+                        ProcessarCSV(filePath);
+                    }
+                    // else if (fileExtension == ".xlsx")
+                    // {
+                    //     ProcessarXLSX(filePath); // Implementar depois
+                    // }
+                    else
+                    {
+                        MessageBox.Show("Formato de ficheiro não suportado. Por favor, selecione um ficheiro .csv ou .xlsx.", "Erro de Formato", MessageBoxButton.OK, MessageBoxImage.Error);
+                        return;
+                    }
+
+                    // Atualizar a UI após o processamento
+                    if (this.FindName("MainContentArea") is ContentControl mainContentArea && mainContentArea.Content == alunosViewContainer)
+                    {
+                        AtualizarTabelaDeAlunosUI();
+                    }
+                    MessageBox.Show("Alunos importados com sucesso!", "Importação Concluída", MessageBoxButton.OK, MessageBoxImage.Information);
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show($"Ocorreu um erro ao processar o ficheiro: {ex.Message}", "Erro de Importação", MessageBoxButton.OK, MessageBoxImage.Error);
+                }
+            }
+        }
+
+        private void ProcessarCSV(string filePath)
+        {
+            var linhas = File.ReadAllLines(filePath);
+            bool cabecalhoIgnorado = false;
+            int alunosAdicionados = 0;
+
+            foreach (var linha in linhas)
+            {
+                if (!cabecalhoIgnorado)
+                {
+                    cabecalhoIgnorado = true;
+                    // Opcional: Validar cabeçalho aqui se necessário
+                    // Ex: if (!linha.ToLower().Contains("nomecompleto") || ...) throw new Exception("Cabeçalho CSV inválido.");
+                    continue; // Pula a linha de cabeçalho
+                }
+
+                var colunas = linha.Split(','); // Assume separador por vírgula
+                if (colunas.Length >= 3) // Precisa de pelo menos Nome, Número, Email. Grupo é opcional.
+                {
+                    try
+                    {
+                        string nome = colunas[0].Trim();
+                        string numero = colunas[1].Trim();
+                        string email = colunas[2].Trim();
+                        // Grupo pode não existir ou estar vazio
+                        string? grupo = (colunas.Length > 3 && !string.IsNullOrWhiteSpace(colunas[3])) ? colunas[3].Trim() : null;
+
+                        // Validações básicas (poderia adicionar mais, como formato de email)
+                        if (string.IsNullOrWhiteSpace(nome) || string.IsNullOrWhiteSpace(numero) || string.IsNullOrWhiteSpace(email))
+                        {
+                            // Logar ou ignorar linha inválida
+                            Console.WriteLine($"Linha CSV ignorada (dados em falta): {linha}");
+                            continue;
+                        }
+
+                        // Opcional: Verificar se aluno já existe pelo número ou email para evitar duplicados
+                        // if (listaDeAlunosPrincipal.Any(a => a.NumeroAluno == numero || a.Email == email))
+                        // {
+                        //    Console.WriteLine($"Aluno duplicado ignorado: {numero} - {email}");
+                        //    continue;
+                        // }
+
+                        Aluno novoAluno = new Aluno(nome, numero, email, grupo);
+                        listaDeAlunosPrincipal.Add(novoAluno);
+                        alunosAdicionados++;
+                    }
+                    catch (Exception ex)
+                    {
+                        // Logar erro para esta linha específica e continuar se possível
+                        Console.WriteLine($"Erro ao processar linha CSV '{linha}': {ex.Message}");
+                    }
+                }
+                else
+                {
+                    Console.WriteLine($"Linha CSV ignorada (formato incorreto): {linha}");
+                }
+            }
+            Console.WriteLine($"{alunosAdicionados} alunos adicionados do CSV.");
+        }
+
+        // private void ProcessarXLSX(string filePath)
+        // {
+        //     // Esta implementação requer uma biblioteca como ExcelDataReader
+        //     // Exemplo (precisa instalar ExcelDataReader e ExcelDataReader.DataSet via NuGet):
+        //     // System.Text.Encoding.RegisterProvider(System.Text.CodePagesEncodingProvider.Instance); // Necessário para .NET Core/.NET 5+
+        //     // using (var stream = File.Open(filePath, FileMode.Open, FileAccess.Read))
+        //     // {
+        //     //     using (var reader = ExcelReaderFactory.CreateReader(stream))
+        //     //     {
+        //     //         var result = reader.AsDataSet(new ExcelDataSetConfiguration() {
+        //     //             ConfigureDataTable = (_) => new ExcelDataTableConfiguration() { UseHeaderRow = true }
+        //     //         });
+        //     //         DataTable dataTable = result.Tables[0];
+        //     //         foreach (DataRow row in dataTable.Rows)
+        //     //         {
+        //     //             try
+        //     //             {
+        //     //                 string nome = row["NomeCompleto"]?.ToString()?.Trim() ?? "";
+        //     //                 string numero = row["NumeroAluno"]?.ToString()?.Trim() ?? "";
+        //     //                 string email = row["Email"]?.ToString()?.Trim() ?? "";
+        //     //                 string? grupo = row["Grupo"]?.ToString()?.Trim();
+        //     //                 if (string.IsNullOrWhiteSpace(grupo)) grupo = null;
+
+        //     //                 if (!string.IsNullOrWhiteSpace(nome) && !string.IsNullOrWhiteSpace(numero) && !string.IsNullOrWhiteSpace(email))
+        //     //                 {
+        //     //                     listaDeAlunosPrincipal.Add(new Aluno(nome, numero, email, grupo));
+        //     //                 }
+        //     //             }
+        //     //             catch (Exception ex) { Console.WriteLine($"Erro ao ler linha XLSX: {ex.Message}"); }
+        //     //         }
+        //     //     }
+        //     // }
+        //     MessageBox.Show("Processamento de XLSX ainda não implementado.", "Info");
+        // }
+
+
         private void ApagarAlunoButton_Click(object sender, RoutedEventArgs e)
         {
             if (sender is Button apagarButton && apagarButton.Tag is Aluno alunoParaApagar)
@@ -320,7 +447,7 @@ namespace FinalLab
             }
         }
 
-        private void AtualizarTabelaDeAlunosUI() // ATUALIZADO PARA INCLUIR GRUPO
+        private void AtualizarTabelaDeAlunosUI()
         {
             if (actualAlunosTableGrid == null) return;
 
@@ -342,16 +469,15 @@ namespace FinalLab
             {
                 actualAlunosTableGrid.RowDefinitions.Insert(actualAlunosTableGrid.RowDefinitions.Count - 1, new RowDefinition { Height = GridLength.Auto });
 
-                // Colunas: Nome, Número, Email, Grupo, Ações
                 actualAlunosTableGrid.Children.Add(CreateTableCellUI(aluno.NomeCompleto, rowIndex, 0, actualAlunosTableGrid));
                 actualAlunosTableGrid.Children.Add(CreateTableCellUI(aluno.NumeroAluno, rowIndex, 1, actualAlunosTableGrid));
-                actualAlunosTableGrid.Children.Add(CreateTableCellUI(aluno.Email, rowIndex, 2, actualAlunosTableGrid)); // Email é coluna 2
-                actualAlunosTableGrid.Children.Add(CreateTableCellUI(aluno.Grupo ?? "N/A", rowIndex, 3, actualAlunosTableGrid)); // Grupo é coluna 3
+                actualAlunosTableGrid.Children.Add(CreateTableCellUI(aluno.Email, rowIndex, 2, actualAlunosTableGrid));
+                actualAlunosTableGrid.Children.Add(CreateTableCellUI(aluno.Grupo ?? "N/A", rowIndex, 3, actualAlunosTableGrid));
 
                 Button apagarAlunoButton = new Button { Content = "Apagar", Tag = aluno, Margin = new Thickness(5.0, 2.0, 5.0, 2.0), Padding = new Thickness(5.0, 2.0, 5.0, 2.0), Foreground = Brushes.Red };
                 apagarAlunoButton.Click += ApagarAlunoButton_Click;
                 Grid.SetRow(apagarAlunoButton, rowIndex);
-                Grid.SetColumn(apagarAlunoButton, 4); // Ações é coluna 4
+                Grid.SetColumn(apagarAlunoButton, 4);
                 actualAlunosTableGrid.Children.Add(apagarAlunoButton);
 
                 rowIndex++;
