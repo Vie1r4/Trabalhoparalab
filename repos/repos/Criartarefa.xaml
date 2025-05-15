@@ -5,53 +5,53 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:FinalLab"
         mc:Ignorable="d"
-        Title="Criar Nova Tarefa" Height="450" Width="350"
-        WindowStartupLocation="CenterOwner" ResizeMode="NoResize" ShowInTaskbar="False">
+        Title="Criar Nova Tarefa" Height="500" Width="450"
+        WindowStartupLocation="CenterOwner"
+        Background="WhiteSmoke"
+        ResizeMode="NoResize">
     <Grid Margin="20">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
-            <!-- Nome Label -->
             <RowDefinition Height="Auto"/>
-            <!-- Nome TextBox -->
-            <RowDefinition Height="Auto"/>
-            <!-- Descrição Label (NOVO) -->
-            <RowDefinition Height="Auto"/>
-            <!-- Descrição TextBox (NOVO) -->
-            <RowDefinition Height="Auto"/>
-            <!-- Prazo Label -->
-            <RowDefinition Height="Auto"/>
-            <!-- Prazo DatePicker -->
-            <RowDefinition Height="Auto"/>
-            <!-- Peso Label -->
-            <RowDefinition Height="Auto"/>
-            <!-- Peso TextBox -->
-            <RowDefinition Height="Auto"/>
-            <!-- Notificar CheckBox -->
             <RowDefinition Height="*"/>
-            <!-- Espaço -->
             <RowDefinition Height="Auto"/>
-            <!-- Botões -->
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="Auto"/>
+            <ColumnDefinition Width="*"/>
+        </Grid.ColumnDefinitions>
 
-        <TextBlock Grid.Row="0" Text="Nome da Tarefa:" Margin="0,0,0,5"/>
-        <TextBox Grid.Row="1" x:Name="NomeTarefaTextBox" Margin="0,0,0,10"/>
+        <TextBlock Grid.Row="0" Grid.Column="0" Text="Título da Tarefa:" VerticalAlignment="Center" Margin="0,0,10,0"/>
+        <TextBox x:Name="TituloTextBox" Grid.Row="0" Grid.Column="1" Margin="0,5" Padding="5"/>
 
-        <TextBlock Grid.Row="2" Text="Descrição:" Margin="0,0,0,5"/>
-        <!-- NOVO -->
-        <TextBox Grid.Row="3" x:Name="DescricaoTarefaTextBox" Margin="0,0,0,10" AcceptsReturn="True" TextWrapping="Wrap" Height="60" VerticalScrollBarVisibility="Auto"/>
-        <!-- NOVO -->
+        <TextBlock Grid.Row="1" Grid.Column="0" Text="Descrição (Opcional):" VerticalAlignment="Top" Margin="0,5,10,0"/>
+        <TextBox x:Name="DescricaoTextBox" Grid.Row="1" Grid.Column="1" Margin="0,5" Padding="5" TextWrapping="Wrap" AcceptsReturn="True" MinHeight="60" MaxHeight="100" VerticalScrollBarVisibility="Auto"/>
 
-        <TextBlock Grid.Row="4" Text="Prazo:" Margin="0,0,0,5"/>
-        <DatePicker Grid.Row="5" x:Name="PrazoDatePicker" Margin="0,0,0,10"/>
+        <TextBlock Grid.Row="2" Grid.Column="0" Text="Data de Início:" VerticalAlignment="Center" Margin="0,5,10,0"/>
+        <DatePicker x:Name="DataInicioPicker" Grid.Row="2" Grid.Column="1" Margin="0,5" Padding="5" VerticalAlignment="Center"/>
+        <!-- Para adicionar hora, pode adicionar TextBox para Hora e Minuto ao lado ou usar um controlo de DataHora mais completo -->
 
-        <TextBlock Grid.Row="6" Text="Peso (%):" Margin="0,0,0,5"/>
-        <TextBox Grid.Row="7" x:Name="PesoTextBox" Margin="0,0,0,10"/>
+        <TextBlock Grid.Row="3" Grid.Column="0" Text="Data de Término:" VerticalAlignment="Center" Margin="0,5,10,0"/>
+        <DatePicker x:Name="DataTerminoPicker" Grid.Row="3" Grid.Column="1" Margin="0,5" Padding="5" VerticalAlignment="Center"/>
+        <!-- Para adicionar hora, pode adicionar TextBox para Hora e Minuto ao lado -->
 
-        <CheckBox Grid.Row="8" x:Name="NotificarCheckBox" Content="Notificar quando o prazo estiver próximo" Margin="0,0,0,15"/>
+        <TextBlock Grid.Row="4" Grid.Column="0" Text="Peso (%):" VerticalAlignment="Center" Margin="0,5,10,0"/>
+        <TextBox x:Name="PesoTextBox" Grid.Row="4" Grid.Column="1" Margin="0,5" Padding="5" PreviewTextInput="PesoTextBox_PreviewTextInput"/>
+        <!-- Adicionado PreviewTextInput para aceitar apenas números -->
 
-        <StackPanel Grid.Row="10" Orientation="Horizontal" HorizontalAlignment="Right">
-            <Button Content="Guardar" Width="100" Margin="0,0,10,0" Click="GuardarButton_Click"/>
-            <Button Content="Cancelar" Width="100" Click="CancelarButton_Click" IsCancel="True"/>
+        <!-- Se quiser manter a opção "Notificar", descomente isto -->
+        <!--
+        <TextBlock Grid.Row="5" Grid.Column="0" Text="Notificar:" VerticalAlignment="Center" Margin="0,5,10,0"/>
+        <CheckBox x:Name="NotificarCheckBox" Grid.Row="5" Grid.Column="1" Margin="0,5" VerticalAlignment="Center"/>
+        -->
+
+        <StackPanel Grid.Row="6" Grid.Column="0" Grid.ColumnSpan="2" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,20,0,0">
+            <Button x:Name="GuardarButton" Content="Guardar" Width="100" Margin="0,0,10,0" Click="GuardarButton_Click" Background="#FF0078D4" Foreground="White" Padding="10,5" BorderThickness="0"/>
+            <Button x:Name="CancelarButton" Content="Cancelar" Width="100" Click="CancelarButton_Click" Background="#FFCCCCCC" Foreground="Black" Padding="10,5" BorderThickness="0"/>
         </StackPanel>
     </Grid>
 </Window>

@@ -1,4 +1,5 @@
-﻿using System;
+﻿// MainWindow.xaml.cs
+using System;
 using System.Collections.Generic;
 using System.Windows;
 using System.Windows.Controls;
@@ -10,7 +11,7 @@ using System.Text.RegularExpressions;
 
 namespace FinalLab
 {
-    // Definição da classe Aluno
+    // Definição da classe Aluno (como no seu paste.txt)
     public class Aluno
     {
         public string NomeCompleto { get; }
@@ -27,18 +28,18 @@ namespace FinalLab
         }
     }
 
-    // A CLASSE TAREFA JÁ NÃO ESTÁ DEFINIDA AQUI. ELA VEM DE Criartarefa.xaml.cs (ou de um ficheiro Tarefa.cs)
-    // Se a classe Tarefa estiver realmente definida noutro local e acessível, esta estrutura está correta.
+    // A CLASSE TAREFA está definida em Tarefa.cs ou Criartarefa.xaml.cs
+    // (Assumindo que esta definição é a correta e está acessível)
+    // public class Tarefa { /* ... com Id, Titulo, Descricao, DataHoraInicio, DataHoraTermino, Peso ... */ }
+
 
     public partial class MainWindow : Window
     {
-        // ALTERAÇÃO AQUI:
-        public static string NomeUtilizadorLogado { get; set; } = Environment.UserName; // Usa o nome do utilizador do Windows
-        // Opcional: ajustar o email de exemplo para ser baseado no nome de utilizador do Windows
+        public static string NomeUtilizadorLogado { get; set; } = Environment.UserName;
         public static string EmailUtilizadorLogado { get; set; } = $"{Environment.UserName.ToLower().Replace(" ", ".")}@exemplo.com";
         public static string? CaminhoFotoUtilizadorLogado { get; set; }
 
-        private List<Tarefa> listaDeTarefasPrincipal = new List<Tarefa>(); // Usa a classe Tarefa unificada
+        private List<Tarefa> listaDeTarefasPrincipal = new List<Tarefa>();
         private Border? tarefasViewContainer;
         private Grid? actualTaskTableGrid;
 
@@ -50,11 +51,11 @@ namespace FinalLab
 
         public MainWindow()
         {
-            InitializeComponent(); // SÓ FUNCIONA SE MainWindow.xaml ESTIVER CORRETO
+            InitializeComponent();
 
             SetupTarefasView();
             SetupAlunosView();
-            UpdateTopBarUserName(); // Agora usará o nome do utilizador do Windows
+            UpdateTopBarUserName();
             if (tarefasViewContainer != null) NavigateToPage(tarefasViewContainer);
 
             UpdatePlaceholderVisibility();
@@ -73,27 +74,46 @@ namespace FinalLab
         {
             if (this.FindName("TopBarUserNameTextBlock") is TextBlock userNameLabel)
             {
-                userNameLabel.Text = NomeUtilizadorLogado; // Irá mostrar o nome do utilizador do Windows
+                userNameLabel.Text = NomeUtilizadorLogado;
             }
         }
-        private void SetupTarefasView()
+
+        private void SetupTarefasView() // MODIFICADO AQUI
         {
             tarefasViewContainer = new Border { BorderBrush = Brushes.LightGray, BorderThickness = new Thickness(1.0) };
             actualTaskTableGrid = new Grid();
             actualTaskTableGrid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
             actualTaskTableGrid.RowDefinitions.Add(new RowDefinition { Height = new GridLength(1, GridUnitType.Star) });
 
-            actualTaskTableGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1.5, GridUnitType.Star) });
-            actualTaskTableGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(2, GridUnitType.Star) });
-            actualTaskTableGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
-            actualTaskTableGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
-            actualTaskTableGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+            actualTaskTableGrid.ColumnDefinitions.Clear();
+            actualTaskTableGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(0.5, GridUnitType.Star) }); // Id
+            actualTaskTableGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1.5, GridUnitType.Star) }); // Título
+            actualTaskTableGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(2.0, GridUnitType.Star) }); // Descrição
+            actualTaskTableGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1.2, GridUnitType.Star) }); // Data Início
+            actualTaskTableGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1.2, GridUnitType.Star) }); // Data Término
+            // AUMENTAR A LARGURA PROPORCIONAL DA COLUNA PESO
+            actualTaskTableGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(0.9, GridUnitType.Star) }); // Peso (%) - Aumentado de 0.6 para 0.9
+            actualTaskTableGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });                         // Ações
 
-            string[] headers = { "Nome da Tarefa", "Descrição", "Prazo", "Peso", "Ações" };
+            string[] headers = { "ID", "Título", "Descrição", "Início", "Término", "Peso (%)", "Ações" };
             for (int i = 0; i < headers.Length; i++)
             {
-                Border headerBorder = new Border { Background = new SolidColorBrush(Color.FromRgb(0xF0, 0xF0, 0xF0)), Padding = new Thickness(10.0) };
-                headerBorder.Child = new TextBlock { Text = headers[i], FontWeight = FontWeights.Bold, HorizontalAlignment = HorizontalAlignment.Center };
+                Border headerBorder = new Border { Background = new SolidColorBrush(Color.FromRgb(0xF0, 0xF0, 0xF0)), Padding = new Thickness(10, 5, 10, 5) }; // Ajustado padding
+                TextBlock headerText = new TextBlock
+                {
+                    Text = headers[i],
+                    FontWeight = FontWeights.Bold,
+                    HorizontalAlignment = HorizontalAlignment.Center,
+                    VerticalAlignment = VerticalAlignment.Center // Para melhor alinhamento vertical
+                };
+
+                // Permitir quebra de linha para cabeçalhos que podem ser mais compridos ou para a coluna do Peso
+                if (headers[i] == "Descrição" || headers[i] == "Peso (%)")
+                {
+                    headerText.TextWrapping = TextWrapping.Wrap;
+                }
+
+                headerBorder.Child = headerText;
                 Grid.SetRow(headerBorder, 0);
                 Grid.SetColumn(headerBorder, i);
                 actualTaskTableGrid?.Children.Add(headerBorder);
@@ -105,14 +125,12 @@ namespace FinalLab
             }
         }
 
-        private void SetupAlunosView()
+        private void SetupAlunosView() // (Como no seu paste.txt)
         {
             alunosViewContainer = new Border { BorderBrush = Brushes.LightGray, BorderThickness = new Thickness(1.0) };
-
             Grid layoutInternoAlunos = new Grid();
             layoutInternoAlunos.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
             layoutInternoAlunos.RowDefinitions.Add(new RowDefinition { Height = new GridLength(1, GridUnitType.Star) });
-
             Grid searchBarGrid = new Grid { Margin = new Thickness(0, 0, 0, 10), Height = 32 };
             Border searchBarBorder = new Border
             {
@@ -122,7 +140,6 @@ namespace FinalLab
                 CornerRadius = new CornerRadius(15)
             };
             searchBarGrid.Children.Add(searchBarBorder);
-
             StackPanel searchBarContentPanel = new StackPanel { Orientation = Orientation.Horizontal, Margin = new Thickness(5, 0, 0, 0) };
             TextBlock lupaIcon = new TextBlock
             {
@@ -134,7 +151,6 @@ namespace FinalLab
                 Margin = new Thickness(5, 0, 5, 0)
             };
             searchBarContentPanel.Children.Add(lupaIcon);
-
             Grid textBoxPlaceholderGrid = new Grid();
             pesquisaAlunosLocalTextBox = new TextBox
             {
@@ -146,7 +162,6 @@ namespace FinalLab
             };
             pesquisaAlunosLocalTextBox.TextChanged += PesquisaAlunosLocalTextBox_TextChanged;
             textBoxPlaceholderGrid.Children.Add(pesquisaAlunosLocalTextBox);
-
             placeholderPesquisaAlunosLocal = new TextBlock
             {
                 Text = "Pesquisar alunos...",
@@ -158,40 +173,29 @@ namespace FinalLab
                 Visibility = Visibility.Visible
             };
             textBoxPlaceholderGrid.Children.Add(placeholderPesquisaAlunosLocal);
-
             searchBarContentPanel.Children.Add(textBoxPlaceholderGrid);
             searchBarGrid.Children.Add(searchBarContentPanel);
-
             Grid.SetRow(searchBarGrid, 0);
             layoutInternoAlunos.Children.Add(searchBarGrid);
-
             actualAlunosTableGrid = new Grid();
             actualAlunosTableGrid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
-
             actualAlunosTableGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(2, GridUnitType.Star) });
             actualAlunosTableGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
             actualAlunosTableGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(2, GridUnitType.Star) });
             actualAlunosTableGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1.5, GridUnitType.Star) });
             actualAlunosTableGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
-
             string[] headers = { "Nome Completo", "Nº Aluno", "Email", "Grupo", "Ações" };
             for (int i = 0; i < headers.Length; i++)
             {
                 Border headerBorder = new Border { Background = new SolidColorBrush(Color.FromRgb(0xF0, 0xF0, 0xF0)), Padding = new Thickness(10.0) };
                 headerBorder.Child = new TextBlock { Text = headers[i], FontWeight = FontWeights.Bold, HorizontalAlignment = HorizontalAlignment.Center };
-                Grid.SetRow(headerBorder, 0);
-                Grid.SetColumn(headerBorder, i);
+                Grid.SetRow(headerBorder, 0); Grid.SetColumn(headerBorder, i);
                 actualAlunosTableGrid?.Children.Add(headerBorder);
             }
-
             ScrollViewer alunosScrollViewer = new ScrollViewer { VerticalScrollBarVisibility = ScrollBarVisibility.Auto, Content = actualAlunosTableGrid };
             Grid.SetRow(alunosScrollViewer, 1);
             layoutInternoAlunos.Children.Add(alunosScrollViewer);
-
-            if (alunosViewContainer != null)
-            {
-                alunosViewContainer.Child = layoutInternoAlunos;
-            }
+            if (alunosViewContainer != null) alunosViewContainer.Child = layoutInternoAlunos;
         }
         private void PesquisaAlunosLocalTextBox_TextChanged(object sender, TextChangedEventArgs e)
         {
@@ -209,7 +213,7 @@ namespace FinalLab
                 mainContentArea.Content = pageContent;
                 bool isTarefasView = pageContent == tarefasViewContainer;
                 bool isAlunosView = pageContent == alunosViewContainer;
-                bool isPerfilView = pageContent is Perfil;
+                bool isPerfilView = pageContent is Perfil; // Certifique-se que a classe Perfil existe
 
                 ShowContextSpecificControls(isTarefasView, isAlunosView, isPerfilView);
 
@@ -257,7 +261,7 @@ namespace FinalLab
         {
             try
             {
-                NavigateToPage(new Perfil());
+                NavigateToPage(new Perfil()); // Certifique-se que a classe Perfil existe
             }
             catch (Exception ex)
             {
@@ -270,53 +274,67 @@ namespace FinalLab
         private void TarefasButton_Click(object sender, RoutedEventArgs e) { NavigateToPage(tarefasViewContainer); }
         private void PautaButton_Click(object sender, RoutedEventArgs e) { MessageBox.Show("Pauta Clicado!"); NavigateToPage(null); }
 
-        private void CriarTarefaButton_Click(object sender, RoutedEventArgs e)
+        private void CriarTarefaButton_Click(object sender, RoutedEventArgs e) // MODIFICADO
         {
             try
             {
-                Criartarefa criarTarefaWin = new Criartarefa { Owner = this }; // Usa a classe Criartarefa do namespace FinalLab
+                // Assumindo que Criartarefa.xaml e Criartarefa.xaml.cs foram atualizados
+                // para lidar com a nova estrutura da classe Tarefa.
+                Criartarefa criarTarefaWin = new Criartarefa { Owner = this };
                 if (criarTarefaWin.ShowDialog() == true && criarTarefaWin.TarefaCriadaComSucesso)
                 {
-                    if (criarTarefaWin.NovaTarefa != null) listaDeTarefasPrincipal.Add(criarTarefaWin.NovaTarefa);
-                    if (this.FindName("MainContentArea") is ContentControl mcc && mcc.Content == tarefasViewContainer) AtualizarTabelaDeTarefasUI();
+                    if (criarTarefaWin.NovaTarefa != null) // NovaTarefa será do tipo Tarefa (a nova definição)
+                    {
+                        listaDeTarefasPrincipal.Add(criarTarefaWin.NovaTarefa);
+                    }
+                    if (this.FindName("MainContentArea") is ContentControl mcc && mcc.Content == tarefasViewContainer)
+                    {
+                        AtualizarTabelaDeTarefasUI();
+                    }
                 }
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Erro ao tentar abrir Criar Tarefa: {ex.Message}\nVerifique se Criartarefa.xaml e Criartarefa.xaml.cs existem, a classe Tarefa está definida corretamente (e apenas uma vez), e se o XAML não tem erros.", "Erro");
+                MessageBox.Show($"Erro ao tentar abrir Criar Tarefa: {ex.Message}\nVerifique se Criartarefa.xaml/cs e a classe Tarefa estão corretos.", "Erro");
             }
         }
 
-        private void ApagarTarefaButton_Click(object sender, RoutedEventArgs e)
+        private void ApagarTarefaButton_Click(object sender, RoutedEventArgs e) // MODIFICADO
         {
-            if (sender is Button btn && btn.Tag is Tarefa tarefa) // Usa a classe Tarefa unificada
+            if (sender is Button btn && btn.Tag is Tarefa tarefa) // Usa a nova classe Tarefa
             {
-                if (MessageBox.Show($"Tem a certeza que deseja apagar a tarefa '{tarefa.Nome}'?", "Confirmar", MessageBoxButton.YesNo, MessageBoxImage.Warning) == MessageBoxResult.Yes)
+                if (MessageBox.Show($"Tem a certeza que deseja apagar a tarefa '{tarefa.Titulo}'?", "Confirmar", MessageBoxButton.YesNo, MessageBoxImage.Warning) == MessageBoxResult.Yes)
                 {
                     listaDeTarefasPrincipal.Remove(tarefa);
-                    if (this.FindName("MainContentArea") is ContentControl mcc && mcc.Content == tarefasViewContainer) AtualizarTabelaDeTarefasUI();
-                    MessageBox.Show($"Tarefa '{tarefa.Nome}' apagada.", "Apagada", MessageBoxButton.OK, MessageBoxImage.Information);
+                    if (this.FindName("MainContentArea") is ContentControl mcc && mcc.Content == tarefasViewContainer)
+                    {
+                        AtualizarTabelaDeTarefasUI();
+                    }
+                    MessageBox.Show($"Tarefa '{tarefa.Titulo}' apagada.", "Apagada", MessageBoxButton.OK, MessageBoxImage.Information);
                 }
             }
         }
-        private void AtualizarTabelaDeTarefasUI()
+
+        private void AtualizarTabelaDeTarefasUI() // MODIFICADO
         {
             if (actualTaskTableGrid == null) return;
 
             string termoPesquisaGlobal = "";
             if (this.FindName("SearchTextBox") is TextBox searchBoxGlobal) termoPesquisaGlobal = searchBoxGlobal.Text.Trim().ToLower();
 
-            IEnumerable<Tarefa> tarefasParaExibir = listaDeTarefasPrincipal; // Usa a classe Tarefa unificada
+            IEnumerable<Tarefa> tarefasParaExibir = listaDeTarefasPrincipal;
             if (!string.IsNullOrEmpty(termoPesquisaGlobal) && (this.FindName("MainContentArea") as ContentControl)?.Content == tarefasViewContainer)
             {
                 tarefasParaExibir = listaDeTarefasPrincipal.Where(t =>
-                    (t.Nome?.ToLower().Contains(termoPesquisaGlobal) ?? false) ||
+                    (t.Titulo?.ToLower().Contains(termoPesquisaGlobal) ?? false) || // Pesquisar por Título
                     (t.Descricao?.ToLower().Contains(termoPesquisaGlobal) ?? false)
                 );
             }
 
+            // Limpar tabela (exceto cabeçalhos)
             for (int i = actualTaskTableGrid.Children.Count - 1; i >= 0; i--)
                 if (Grid.GetRow(actualTaskTableGrid.Children[i]) > 0) actualTaskTableGrid.Children.RemoveAt(i);
+            // Limpar RowDefinitions de dados
             while (actualTaskTableGrid.RowDefinitions.Count > 1) actualTaskTableGrid.RowDefinitions.RemoveAt(1);
 
             int rowIndex = 1;
@@ -331,27 +349,31 @@ namespace FinalLab
             {
                 foreach (var tarefa in tarefasParaExibir)
                 {
-                    if (actualTaskTableGrid.RowDefinitions.Count <= rowIndex)
+                    if (actualTaskTableGrid.RowDefinitions.Count <= rowIndex) // Garante que a RowDefinition existe
                         actualTaskTableGrid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
 
-                    actualTaskTableGrid.Children.Add(CreateTableCellUI(tarefa.Nome, rowIndex, 0, actualTaskTableGrid));
-                    actualTaskTableGrid.Children.Add(CreateTableCellUI(tarefa.Descricao, rowIndex, 1, actualTaskTableGrid));
-                    actualTaskTableGrid.Children.Add(CreateTableCellUI(tarefa.Prazo.ToShortDateString(), rowIndex, 2, actualTaskTableGrid));
-                    actualTaskTableGrid.Children.Add(CreateTableCellUI($"{tarefa.Peso}%", rowIndex, 3, actualTaskTableGrid));
+                    // Preencher células com os novos campos da Tarefa
+                    actualTaskTableGrid.Children.Add(CreateTableCellUI(tarefa.Id.ToString().Substring(0, Math.Min(8, tarefa.Id.ToString().Length)), rowIndex, 0, actualTaskTableGrid));
+                    actualTaskTableGrid.Children.Add(CreateTableCellUI(tarefa.Titulo, rowIndex, 1, actualTaskTableGrid));
+                    actualTaskTableGrid.Children.Add(CreateTableCellUI(tarefa.Descricao ?? "", rowIndex, 2, actualTaskTableGrid));
+                    actualTaskTableGrid.Children.Add(CreateTableCellUI(tarefa.DataHoraInicio.ToString("g"), rowIndex, 3, actualTaskTableGrid));
+                    actualTaskTableGrid.Children.Add(CreateTableCellUI(tarefa.DataHoraTermino.ToString("g"), rowIndex, 4, actualTaskTableGrid));
+                    actualTaskTableGrid.Children.Add(CreateTableCellUI($"{tarefa.Peso}", rowIndex, 5, actualTaskTableGrid)); // Removido '%' para mais espaço
+
                     Button btnApagar = new Button { Content = "Apagar", Tag = tarefa, Margin = new Thickness(5, 2, 5, 2), Padding = new Thickness(5, 2, 5, 2), Foreground = Brushes.Red };
                     btnApagar.Click += ApagarTarefaButton_Click;
-                    Grid.SetRow(btnApagar, rowIndex); Grid.SetColumn(btnApagar, 4);
+                    Grid.SetRow(btnApagar, rowIndex); Grid.SetColumn(btnApagar, 6);
                     actualTaskTableGrid.Children.Add(btnApagar);
                     rowIndex++;
                 }
             }
         }
 
-        private void AdicionarAlunoButton_Click(object sender, RoutedEventArgs e)
+        private void AdicionarAlunoButton_Click(object sender, RoutedEventArgs e) // (Como no seu paste.txt)
         {
             try
             {
-                AdicionarAluno adicionarAlunoWin = new AdicionarAluno { Owner = this }; // Usa a classe AdicionarAluno do namespace FinalLab
+                AdicionarAluno adicionarAlunoWin = new AdicionarAluno { Owner = this };
                 if (adicionarAlunoWin.ShowDialog() == true && adicionarAlunoWin.AlunoAdicionadoComSucesso)
                 {
                     if (adicionarAlunoWin.NovoAluno != null) listaDeAlunosPrincipal.Add(adicionarAlunoWin.NovoAluno);
@@ -365,7 +387,7 @@ namespace FinalLab
             }
         }
 
-        private void InserirFicheiroAlunosButton_Click(object sender, RoutedEventArgs e)
+        private void InserirFicheiroAlunosButton_Click(object sender, RoutedEventArgs e) // (Como no seu paste.txt)
         {
             OpenFileDialog openFileDialog = new OpenFileDialog
             {
@@ -376,128 +398,87 @@ namespace FinalLab
                 CheckFileExists = true,
                 CheckPathExists = true
             };
-
             if (openFileDialog.ShowDialog() == true)
             {
                 string filePath = openFileDialog.FileName;
                 try
                 {
-                    int numAlunosAntes = listaDeAlunosPrincipal.Count;
-                    ProcessarCSV(filePath);
+                    int numAlunosAntes = listaDeAlunosPrincipal.Count; ProcessarCSV(filePath);
                     int numAlunosDepois = listaDeAlunosPrincipal.Count;
-
-                    if (numAlunosDepois > numAlunosAntes)
-                    {
-                        AtualizarTabelaDeAlunosUI();
-                        AtualizarContadoresSumario();
-                    }
+                    if (numAlunosDepois > numAlunosAntes) { AtualizarTabelaDeAlunosUI(); AtualizarContadoresSumario(); }
                     MessageBox.Show($"Importação de alunos concluída. {numAlunosDepois - numAlunosAntes} alunos adicionados. Verifique a tabela e a janela 'Output' para detalhes.", "Importação", MessageBoxButton.OK, MessageBoxImage.Information);
                 }
-                catch (Exception ex)
-                {
-                    MessageBox.Show($"Ocorreu um erro ao processar o ficheiro: {ex.Message}", "Erro de Importação", MessageBoxButton.OK, MessageBoxImage.Error);
-                }
+                catch (Exception ex) { MessageBox.Show($"Ocorreu um erro ao processar o ficheiro: {ex.Message}", "Erro de Importação", MessageBoxButton.OK, MessageBoxImage.Error); }
             }
         }
-        private void ProcessarCSV(string filePath)
+        private void ProcessarCSV(string filePath) // (Como no seu paste.txt)
         {
-            var linhas = File.ReadAllLines(filePath, System.Text.Encoding.UTF8);
-            bool cabecalhoIgnorado = false;
-            int alunosAdicionadosComSucesso = 0;
-            int linhaNumeroAtual = 0;
-
+            var linhas = File.ReadAllLines(filePath, System.Text.Encoding.UTF8); bool cabecalhoIgnorado = false;
+            int alunosAdicionadosComSucesso = 0; int linhaNumeroAtual = 0;
             Console.WriteLine($"--- Iniciando processamento do CSV: {filePath} ---");
             foreach (var linhaOriginal in linhas)
             {
-                linhaNumeroAtual++;
-                string linhaLimpa = linhaOriginal.Trim();
+                linhaNumeroAtual++; string linhaLimpa = linhaOriginal.Trim();
                 if (string.IsNullOrWhiteSpace(linhaLimpa)) { Console.WriteLine($"Linha {linhaNumeroAtual} ignorada (vazia)."); continue; }
-
-                if (!cabecalhoIgnorado)
-                {
-                    cabecalhoIgnorado = true;
-                    Console.WriteLine($"Linha {linhaNumeroAtual} (Cabeçalho) ignorada: \"{linhaLimpa}\"");
-                    continue;
-                }
-
-                var colunas = linhaLimpa.Split(','); // Assumindo VÍRGULA
+                if (!cabecalhoIgnorado) { cabecalhoIgnorado = true; Console.WriteLine($"Linha {linhaNumeroAtual} (Cabeçalho) ignorada: \"{linhaLimpa}\""); continue; }
+                var colunas = linhaLimpa.Split(','); // ASSUMINDO VÍRGULA
                 Console.WriteLine($"Linha {linhaNumeroAtual} processando: \"{linhaLimpa}\". Colunas encontradas: {colunas.Length}");
-
                 if (colunas.Length >= 3)
                 {
                     try
                     {
-                        string nome = colunas[0].Trim();
-                        string numero = colunas[1].Trim();
-                        string email = colunas[2].Trim();
+                        string nome = colunas[0].Trim(); string numero = colunas[1].Trim(); string email = colunas[2].Trim();
                         string? grupo = (colunas.Length > 3 && !string.IsNullOrWhiteSpace(colunas[3])) ? colunas[3].Trim() : null;
                         Console.WriteLine($"  Dados extraídos: Nome='{nome}', Numero='{numero}', Email='{email}', Grupo='{grupo ?? "N/A"}'");
-
                         if (string.IsNullOrWhiteSpace(nome) || string.IsNullOrWhiteSpace(numero) || string.IsNullOrWhiteSpace(email))
                         { Console.WriteLine($"  -> Linha {linhaNumeroAtual} IGNORADA (dados essenciais em falta)."); continue; }
                         if (!Regex.IsMatch(email, @"^[^@\s]+@[^@\s]+\.[^@\s]+$"))
                         { Console.WriteLine($"  -> Linha {linhaNumeroAtual} IGNORADA (formato de email inválido: '{email}')."); continue; }
-
-                        listaDeAlunosPrincipal.Add(new Aluno(nome, numero, email, grupo));
-                        alunosAdicionadosComSucesso++;
+                        listaDeAlunosPrincipal.Add(new Aluno(nome, numero, email, grupo)); alunosAdicionadosComSucesso++;
                         Console.WriteLine($"  -> Aluno ADICIONADO: {nome}");
                     }
                     catch (IndexOutOfRangeException) { Console.WriteLine($"  ERRO na Linha {linhaNumeroAtual}: Formato de colunas inesperado. Linha: \"{linhaOriginal}\""); }
                     catch (Exception ex) { Console.WriteLine($"  ERRO na Linha {linhaNumeroAtual}: \"{linhaOriginal}\". Detalhes: {ex.Message}"); }
                 }
-                else
-                { Console.WriteLine($"Linha {linhaNumeroAtual} IGNORADA (formato incorreto - esperadas >=3 colunas, encontradas: {colunas.Length}): \"{linhaOriginal}\""); }
+                else { Console.WriteLine($"Linha {linhaNumeroAtual} IGNORADA (formato incorreto - esperadas >=3 colunas, encontradas: {colunas.Length}): \"{linhaOriginal}\""); }
             }
             Console.WriteLine($"--- Processamento CSV concluído. {alunosAdicionadosComSucesso} alunos adicionados. ---");
         }
 
-        private void ApagarAlunoButton_Click(object sender, RoutedEventArgs e)
+        private void ApagarAlunoButton_Click(object sender, RoutedEventArgs e) // (Como no seu paste.txt)
         {
             if (sender is Button btn && btn.Tag is Aluno aluno)
             {
                 if (MessageBox.Show($"Tem a certeza que deseja apagar o aluno '{aluno.NomeCompleto}'?", "Confirmar", MessageBoxButton.YesNo, MessageBoxImage.Warning) == MessageBoxResult.Yes)
                 {
-                    listaDeAlunosPrincipal.Remove(aluno);
-                    AtualizarTabelaDeAlunosUI();
-                    AtualizarContadoresSumario();
+                    listaDeAlunosPrincipal.Remove(aluno); AtualizarTabelaDeAlunosUI(); AtualizarContadoresSumario();
                     MessageBox.Show($"Aluno '{aluno.NomeCompleto}' apagado.", "Apagado", MessageBoxButton.OK, MessageBoxImage.Information);
                 }
             }
         }
 
-        private void AtualizarTabelaDeAlunosUI()
+        private void AtualizarTabelaDeAlunosUI() // (Como no seu paste.txt)
         {
             if (actualAlunosTableGrid == null) return;
-
             string termoPesquisaLocal = pesquisaAlunosLocalTextBox?.Text.Trim().ToLower() ?? "";
             string termoPesquisaGlobal = "";
             if (this.FindName("SearchTextBox") is TextBox searchBoxGlobal) termoPesquisaGlobal = searchBoxGlobal.Text.Trim().ToLower();
-
             IEnumerable<Aluno> alunosParaExibir = listaDeAlunosPrincipal;
-
             if (!string.IsNullOrEmpty(termoPesquisaLocal))
             {
                 alunosParaExibir = listaDeAlunosPrincipal.Where(a =>
-                    (a.NomeCompleto?.ToLower().Contains(termoPesquisaLocal) ?? false) ||
-                    (a.NumeroAluno?.ToLower().Contains(termoPesquisaLocal) ?? false) ||
-                    (a.Email?.ToLower().Contains(termoPesquisaLocal) ?? false) ||
-                    (a.Grupo?.ToLower().Contains(termoPesquisaLocal) ?? false)
-                );
+                    (a.NomeCompleto?.ToLower().Contains(termoPesquisaLocal) ?? false) || (a.NumeroAluno?.ToLower().Contains(termoPesquisaLocal) ?? false) ||
+                    (a.Email?.ToLower().Contains(termoPesquisaLocal) ?? false) || (a.Grupo?.ToLower().Contains(termoPesquisaLocal) ?? false));
             }
             else if (!string.IsNullOrEmpty(termoPesquisaGlobal) && (this.FindName("MainContentArea") as ContentControl)?.Content == alunosViewContainer)
             {
                 alunosParaExibir = listaDeAlunosPrincipal.Where(a =>
-                    (a.NomeCompleto?.ToLower().Contains(termoPesquisaGlobal) ?? false) ||
-                    (a.NumeroAluno?.ToLower().Contains(termoPesquisaGlobal) ?? false) ||
-                    (a.Email?.ToLower().Contains(termoPesquisaGlobal) ?? false) ||
-                    (a.Grupo?.ToLower().Contains(termoPesquisaGlobal) ?? false)
-                );
+                    (a.NomeCompleto?.ToLower().Contains(termoPesquisaGlobal) ?? false) || (a.NumeroAluno?.ToLower().Contains(termoPesquisaGlobal) ?? false) ||
+                    (a.Email?.ToLower().Contains(termoPesquisaGlobal) ?? false) || (a.Grupo?.ToLower().Contains(termoPesquisaGlobal) ?? false));
             }
-
             for (int i = actualAlunosTableGrid.Children.Count - 1; i >= 0; i--)
                 if (Grid.GetRow(actualAlunosTableGrid.Children[i]) > 0) actualAlunosTableGrid.Children.RemoveAt(i);
             while (actualAlunosTableGrid.RowDefinitions.Count > 1) actualAlunosTableGrid.RowDefinitions.RemoveAt(1);
-
             int rowIndex = 1;
             if (!alunosParaExibir.Any())
             {
@@ -510,9 +491,7 @@ namespace FinalLab
             {
                 foreach (var aluno in alunosParaExibir)
                 {
-                    if (actualAlunosTableGrid.RowDefinitions.Count <= rowIndex)
-                        actualAlunosTableGrid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
-
+                    if (actualAlunosTableGrid.RowDefinitions.Count <= rowIndex) actualAlunosTableGrid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
                     actualAlunosTableGrid.Children.Add(CreateTableCellUI(aluno.NomeCompleto, rowIndex, 0, actualAlunosTableGrid));
                     actualAlunosTableGrid.Children.Add(CreateTableCellUI(aluno.NumeroAluno, rowIndex, 1, actualAlunosTableGrid));
                     actualAlunosTableGrid.Children.Add(CreateTableCellUI(aluno.Email, rowIndex, 2, actualAlunosTableGrid));
@@ -525,18 +504,13 @@ namespace FinalLab
                 }
             }
         }
-        private Border CreateTableCellUI(string text, int row, int column, Grid targetGrid)
+        private Border CreateTableCellUI(string text, int row, int column, Grid targetGrid) // (Como no seu paste.txt)
         {
-            Border cellBorder = new Border
-            {
-                BorderBrush = Brushes.Gainsboro,
-                Padding = new Thickness(10.0)
-            };
+            Border cellBorder = new Border { BorderBrush = Brushes.Gainsboro, Padding = new Thickness(10.0) };
             int totalColumns = targetGrid?.ColumnDefinitions.Count ?? 1;
             cellBorder.BorderThickness = new Thickness(0.0, 0.0, (column < totalColumns - 1) ? 1.0 : 0.0, 1.0);
             TextBlock content = new TextBlock { Text = text, VerticalAlignment = VerticalAlignment.Center, TextTrimming = TextTrimming.CharacterEllipsis, TextWrapping = TextWrapping.Wrap };
-            cellBorder.Child = content;
-            Grid.SetRow(cellBorder, row); Grid.SetColumn(cellBorder, column);
+            cellBorder.Child = content; Grid.SetRow(cellBorder, row); Grid.SetColumn(cellBorder, column);
             return cellBorder;
         }
     }
