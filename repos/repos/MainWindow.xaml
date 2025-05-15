@@ -25,12 +25,6 @@
                         <TextBlock Text="Perfil" VerticalAlignment="Center"/>
                     </StackPanel>
                 </Button>
-                <Button x:Name="DashboardButton" Click="DashboardButton_Click" HorizontalAlignment="Stretch" Margin="0,5" Padding="10,5" Foreground="White" Background="#FF4A4A4A" BorderThickness="0">
-                    <StackPanel Orientation="Horizontal">
-                        <TextBlock Text="" FontFamily="Segoe MDL2 Assets" Margin="0,0,10,0" VerticalAlignment="Center"/>
-                        <TextBlock Text="Dashboard" VerticalAlignment="Center"/>
-                    </StackPanel>
-                </Button>
                 <Button x:Name="AlunosButton" Click="AlunosButton_Click" HorizontalAlignment="Stretch" Margin="0,5" Padding="10,5" Foreground="White" Background="#FF4A4A4A" BorderThickness="0">
                     <StackPanel Orientation="Horizontal">
                         <TextBlock Text="" FontFamily="Segoe MDL2 Assets" Margin="0,0,10,0" VerticalAlignment="Center"/>
@@ -76,14 +70,26 @@
                     <ColumnDefinition Width="*"/>
                     <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
-                <Grid Grid.Column="0" VerticalAlignment="Center">
-                    <TextBox x:Name="SearchTextBox" Padding="5,2" VerticalAlignment="Center" TextChanged="SearchTextBox_TextChanged_UpdatePlaceholder"/>
-                    <TextBlock x:Name="PlaceholderTextBlock" Text="🔍 Buscar aluno, grupo ou tarefa..." Foreground="Gray" IsHitTestVisible="False"
-                               VerticalAlignment="Center" Margin="8,0,0,0" HorizontalAlignment="Left" Visibility="Visible"/>
-                </Grid>
+
+                <TextBlock x:Name="PageTitleTextBlock" 
+                           Grid.Column="0" 
+                           Text="Carregando..." 
+                           FontSize="20" 
+                           FontWeight="SemiBold" 
+                           VerticalAlignment="Center" 
+                           Margin="0,0,10,0"/>
+
                 <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
-                    <TextBlock Text="" FontFamily="Segoe MDL2 Assets" FontSize="20" Margin="0,0,15,0" VerticalAlignment="Center"/>
-                    <TextBlock Text="⚡" FontFamily="Segoe MDL2 Assets" FontSize="20" Margin="0,0,15,0" VerticalAlignment="Center"/>
+                    <Ellipse x:Name="UserProfileImageEllipse" 
+                             Width="28" 
+                             Height="28" 
+                             Margin="0,0,10,0"
+                             VerticalAlignment="Center">
+                        <Ellipse.Fill>
+                            <ImageBrush x:Name="UserProfileImageBrush" Stretch="UniformToFill"/>
+                        </Ellipse.Fill>
+                    </Ellipse>
+
                     <TextBlock x:Name="TopBarUserNameTextBlock" 
                                Text="Nome do Utilizador" 
                                VerticalAlignment="Center" 
