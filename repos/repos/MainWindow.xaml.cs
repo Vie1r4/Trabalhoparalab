@@ -10,9 +10,7 @@ using System.Linq;
 using System.Text.RegularExpressions;
 using System.Windows.Shapes;
 
-// Certifique-se de que a classe Tarefa está acessível.
-// Se estiver num ficheiro Tarefa.cs no mesmo namespace, não precisa de using adicional.
-// Ex: namespace FinalLab { public class Tarefa { /* Id, Titulo, ... */ } }
+
 
 namespace FinalLab
 {
@@ -39,7 +37,7 @@ namespace FinalLab
         public static string EmailUtilizadorLogado { get; set; } = $"{Environment.UserName.ToLower().Replace(" ", ".")}@exemplo.com";
 
         // Defina o caminho para a imagem de perfil.
-        // Este valor deve ser atualizado pela sua página de Perfil.
+        // Este valor deve ser atualizado pela página de Perfil.
         public static string? CaminhoFotoUtilizadorLogado { get; set; }
 
         private List<Tarefa> listaDeTarefasPrincipal = new List<Tarefa>();
