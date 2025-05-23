@@ -1,14 +1,15 @@
 ﻿<UserControl x:Class="FinalLab.EditarPerfil"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-             xmlns:local="clr-namespace:FinalLab"
-             mc:Ignorable="d"
-             d:DesignHeight="500" d:DesignWidth="700"
-             Background="White">
-    <Grid Margin="30">
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             mc:Ignorable="d" 
+             d:DesignHeight="550" d:DesignWidth="800">
+    <Grid Margin="20">
         <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
@@ -17,32 +18,26 @@
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
 
-        <TextBlock Text="Editar Perfil" Grid.Row="0" FontSize="28" FontWeight="SemiBold" Margin="0,0,0,25" HorizontalAlignment="Left" Foreground="#333"/>
+        <TextBlock Grid.Row="0" Text="Editar Perfil" FontSize="24" FontWeight="Bold" HorizontalAlignment="Center" Margin="0,0,0,20"/>
 
-        <StackPanel Grid.Row="1" Orientation="Vertical" HorizontalAlignment="Center" Margin="0,0,0,30">
-            <Border BorderBrush="#DDDDDD" BorderThickness="1" Width="160" Height="160" CornerRadius="80" Background="#F0F0F0">
-                <Ellipse Width="158" Height="158">
-                    <Ellipse.Fill>
-                        <ImageBrush x:Name="ProfileImageBrushEdit" Stretch="UniformToFill"/>
-                    </Ellipse.Fill>
-                </Ellipse>
-            </Border>
-            <Button x:Name="ChangePictureButton" Content="Alterar Foto" Width="120" Margin="0,15,0,0" Click="ChangePictureButton_Click" Padding="8,4"/>
-        </StackPanel>
+        <Ellipse Grid.Row="1" Width="150" Height="150" Stroke="DarkGray" StrokeThickness="1" HorizontalAlignment="Center" Margin="0,0,0,10">
+            <Ellipse.Fill>
+                <ImageBrush x:Name="EditProfileImageBrush" Stretch="UniformToFill"/>
+            </Ellipse.Fill>
+        </Ellipse>
+        <Button Grid.Row="2" Content="Alterar Foto..." Width="150" HorizontalAlignment="Center" Margin="0,0,0,20" Click="ChangePictureButton_Click" Style="{StaticResource ActionButtonStyle}"/>
 
-        <StackPanel Grid.Row="2" Margin="0,0,0,15">
-            <TextBlock Text="Nome:" FontWeight="Medium" Foreground="#555" Margin="0,0,0,5"/>
-            <TextBox x:Name="NameTextBoxEdit" Padding="8,6" BorderBrush="#CCCCCC" BorderThickness="1"/>
-        </StackPanel>
+        <Label Grid.Row="3" Content="Nome de Perfil:" FontWeight="SemiBold" FontSize="16" HorizontalAlignment="Left" Margin="0,10,0,2"/>
+        <TextBox Grid.Row="4" x:Name="EditNomePerfilTextBox" FontSize="16" Padding="3" Margin="0,0,0,15" VerticalContentAlignment="Center" Height="28"
+                 IsReadOnly="False" IsEnabled="True"/>
 
-        <StackPanel Grid.Row="3" Margin="0,0,0,15">
-            <TextBlock Text="Email:" FontWeight="Medium" Foreground="#555" Margin="0,0,0,5"/>
-            <TextBox x:Name="EmailTextBoxEdit" Padding="8,6" BorderBrush="#CCCCCC" BorderThickness="1"/>
-        </StackPanel>
+        <Label Grid.Row="5" Content="Endereço de Email:" FontWeight="SemiBold" FontSize="16" HorizontalAlignment="Left" Margin="0,10,0,2"/>
+        <TextBox Grid.Row="6" x:Name="EditEmailTextBlock" FontSize="16" VerticalContentAlignment="Center" Padding="3" Margin="0,0,0,30" Height="28"
+                 IsReadOnly="False" IsEnabled="True"/>
 
-        <StackPanel Grid.Row="5" Orientation="Horizontal" HorizontalAlignment="Right">
-            <Button x:Name="SaveProfileButton" Content="Guardar Alterações" Padding="12,6" Background="#007ACC" Foreground="White" BorderThickness="0" Click="SaveProfileButton_Click" Margin="0,0,10,0"/>
-            <Button x:Name="CancelEditButton" Content="Cancelar" Padding="12,6" Click="CancelEditButton_Click"/>
+        <StackPanel Grid.Row="8" Orientation="Horizontal" HorizontalAlignment="Center">
+            <Button Content="Guardar Alterações" Width="180" Margin="0,0,10,0" Click="SaveProfileButton_Click" Style="{StaticResource ActionButtonStyle}"/>
+            <Button Content="Cancelar" Width="120" Click="CancelEditButton_Click"/>
         </StackPanel>
     </Grid>
 </UserControl>

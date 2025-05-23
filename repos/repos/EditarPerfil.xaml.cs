@@ -1,160 +1,115 @@
-﻿using Microsoft.Win32;
+﻿// Ficheiro: EditarPerfil.xaml.cs
+using Microsoft.Win32;
 using System;
 using System.IO;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media.Imaging;
+using System.Diagnostics;
+using System.Text.RegularExpressions;
+using System.Windows.Media;
 
 namespace FinalLab
 {
     public partial class EditarPerfil : UserControl
     {
-        private string? _tempImagePath; // Renomeado para seguir convenções e tornado anulável explicitamente
-        private MainWindow _mainWindowInstance; // Para guardar a referência à MainWindow
+        private MainWindow? _mainWindowInstance;
+        private string? _tempImagePathForEditing;
 
-        // CONSTRUTOR MODIFICADO para aceitar MainWindow
-        public EditarPerfil(MainWindow mainWindow)
-        {
-            InitializeComponent();
-            _mainWindowInstance = mainWindow; // Guarda a instância da MainWindow
-            LoadUserProfileForEditing();
-        }
+        public EditarPerfil(MainWindow mainWindow) : this() { _mainWindowInstance = mainWindow; Debug.WriteLine("[EditarPerfil.xaml.cs] Construtor com MainWindow."); }
+        public EditarPerfil() { InitializeComponent(); Debug.WriteLine("[EditarPerfil.xaml.cs] InitializeComponent Concluído."); this.Loaded += EditarPerfil_Loaded; }
 
-        // Construtor padrão (se necessário para o designer XAML ou outros usos)
-        // No entanto, se este UserControl só é criado com a referência da MainWindow,
-        // este construtor pode não ser chamado em tempo de execução.
-        // Se o designer XAML se queixar, pode adicionar um construtor padrão vazio,
-        // mas a lógica que depende de _mainWindowInstance não funcionará.
-        /*
-        public EditarPerfil()
+        private void EditarPerfil_Loaded(object sender, RoutedEventArgs e)
         {
-            InitializeComponent();
-            // Se este construtor for chamado, _mainWindowInstance será null.
-            // A lógica que depende de _mainWindowInstance pode falhar.
-            // LoadUserProfileForEditing(); // Pode não funcionar corretamente sem _mainWindowInstance
+            Debug.WriteLine("[EditarPerfil.xaml.cs] EditarPerfil_Loaded iniciado.");
+            try
+            {
+                _mainWindowInstance ??= Window.GetWindow(this) as MainWindow;
+                if (_mainWindowInstance == null) { MessageBox.Show("Erro: Janela principal não encontrada."); Debug.WriteLine("[EditarPerfil.xaml.cs] ERRO: _mainWindowInstance é null."); return; }
+                LoadUserProfileForEditing();
+            }
+            catch (Exception ex) { MessageBox.Show($"Erro ao carregar dados para edição: {ex.Message}", "Erro"); Debug.WriteLine($"[EditarPerfil.xaml.cs] ERRO EditarPerfil_Loaded: {ex}"); }
         }
-        */
 
         private void LoadUserProfileForEditing()
         {
-            // Assume-se que NameTextBoxEdit, EmailTextBoxEdit, e ProfileImageBrushEdit são x:Name no seu EditarPerfil.xaml
-            if (this.FindName("NameTextBoxEdit") is TextBox nameTextBox) nameTextBox.Text = MainWindow.NomeUtilizadorLogado;
-            if (this.FindName("EmailTextBoxEdit") is TextBox emailTextBox) emailTextBox.Text = MainWindow.EmailUtilizadorLogado;
+            Debug.WriteLine("[EditarPerfil.xaml.cs] LoadUserProfileForEditing chamado.");
+            if (EditNomePerfilTextBox == null || EditEmailTextBlock == null || EditProfileImageBrush == null)
+            { Debug.WriteLine("[EditarPerfil.xaml.cs] ERRO: Controlo XAML nulo em LoadUserProfileForEditing."); return; }
 
-            _tempImagePath = MainWindow.CaminhoFotoUtilizadorLogado; // Guarda o caminho atual para o caso de o utilizador cancelar
-
-            if (this.FindName("ProfileImageBrushEdit") is System.Windows.Media.ImageBrush profileImageBrush)
-            {
-                if (!string.IsNullOrEmpty(MainWindow.CaminhoFotoUtilizadorLogado) && File.Exists(MainWindow.CaminhoFotoUtilizadorLogado))
-                {
-                    try
-                    {
-                        BitmapImage bitmap = new BitmapImage();
-                        bitmap.BeginInit();
-                        bitmap.CacheOption = BitmapCacheOption.OnLoad;
-                        bitmap.CreateOptions = BitmapCreateOptions.IgnoreImageCache;
-                        bitmap.UriSource = new Uri(MainWindow.CaminhoFotoUtilizadorLogado, UriKind.Absolute);
-                        bitmap.EndInit();
-                        profileImageBrush.ImageSource = bitmap;
-                    }
-                    catch (Exception ex)
-                    {
-                        MessageBox.Show($"Erro ao carregar imagem para edição: {ex.Message}", "Erro Imagem", MessageBoxButton.OK, MessageBoxImage.Error);
-                        SetPlaceholderImageEdit(profileImageBrush);
-                    }
-                }
-                else
-                {
-                    SetPlaceholderImageEdit(profileImageBrush);
-                }
-            }
+            EditNomePerfilTextBox.Text = MainWindow.NomePerfilEditavel;
+            EditEmailTextBlock.Text = MainWindow.EmailUtilizadorLogado;
+            _tempImagePathForEditing = MainWindow.CaminhoFotoUtilizadorLogado;
+            Debug.WriteLine($"[EditarPerfil.xaml.cs] Perfil carregado. Nome: {EditNomePerfilTextBox.Text}, Email: {EditEmailTextBlock.Text}, TempPath: {_tempImagePathForEditing}");
+            UpdateProfileImageOnPageFromPath(_tempImagePathForEditing);
         }
 
-        private void SetPlaceholderImageEdit(System.Windows.Media.ImageBrush? imageBrush)
+        public void UpdateProfileImageOnPage(BitmapImage? bitmap)
         {
-            if (imageBrush != null)
+            if (EditProfileImageBrush != null) { EditProfileImageBrush.ImageSource = bitmap; Debug.WriteLine(bitmap != null ? "[EditarPerfil.xaml.cs] Imagem da página atualizada." : "[EditarPerfil.xaml.cs] Imagem da página definida como null."); }
+            else { Debug.WriteLine("[EditarPerfil.xaml.cs] EditProfileImageBrush na página EditarPerfil é null."); }
+        }
+
+        private void UpdateProfileImageOnPageFromPath(string? imagePath)
+        {
+            Debug.WriteLine($"[EditarPerfil.xaml.cs] UpdateProfileImageFromPath. Path: {imagePath}");
+            if (EditProfileImageBrush == null) { Debug.WriteLine("[EditarPerfil.xaml.cs] EditProfileImageBrush (FromPath) é null."); return; }
+            BitmapImage? bmp = null;
+            if (!string.IsNullOrEmpty(imagePath) && File.Exists(imagePath))
             {
-                imageBrush.ImageSource = null;
-                // Adicione aqui a lógica para definir uma cor ou imagem de placeholder no ImageBrush
-                // ou na Ellipse que o contém, se necessário.
+                try
+                {
+                    bmp = new BitmapImage(); bmp.BeginInit();
+                    bmp.UriSource = new Uri(imagePath, UriKind.Absolute);
+                    bmp.CacheOption = BitmapCacheOption.OnLoad; bmp.CreateOptions = BitmapCreateOptions.IgnoreImageCache;
+                    bmp.EndInit(); bmp.Freeze(); Debug.WriteLine("[EditarPerfil.xaml.cs] Imagem (FromPath) carregada para preview.");
+                }
+                catch (Exception ex) { Debug.WriteLine($"[EditarPerfil.xaml.cs] ERRO ao carregar imagem para preview (FromPath): {ex.Message}"); bmp = null; }
             }
+            else { Debug.WriteLine("[EditarPerfil.xaml.cs] Caminho nulo ou ficheiro não existe para preview (FromPath)."); }
+            EditProfileImageBrush.ImageSource = bmp;
         }
 
         private void ChangePictureButton_Click(object sender, RoutedEventArgs e)
         {
-            OpenFileDialog openFileDialog = new OpenFileDialog
+            Debug.WriteLine("[EditarPerfil.xaml.cs] ChangePictureButton_Click chamado.");
+            try
             {
-                Title = "Selecionar Nova Foto",
-                Filter = "Ficheiros de Imagem (*.jpg;*.jpeg;*.png)|*.jpg;*.jpeg;*.png|Todos os Ficheiros (*.*)|*.*"
-            };
-
-            if (openFileDialog.ShowDialog() == true)
-            {
-                try
-                {
-                    BitmapImage bitmap = new BitmapImage();
-                    bitmap.BeginInit();
-                    bitmap.CacheOption = BitmapCacheOption.OnLoad;
-                    bitmap.CreateOptions = BitmapCreateOptions.IgnoreImageCache;
-                    bitmap.UriSource = new Uri(openFileDialog.FileName, UriKind.Absolute);
-                    bitmap.EndInit();
-
-                    if (this.FindName("ProfileImageBrushEdit") is System.Windows.Media.ImageBrush profileImageBrush)
-                    {
-                        profileImageBrush.ImageSource = bitmap;
-                    }
-                    _tempImagePath = openFileDialog.FileName; // Atualiza o caminho temporário com a nova foto selecionada
-                }
-                catch (Exception ex)
-                {
-                    MessageBox.Show($"Erro ao carregar nova imagem: {ex.Message}", "Erro Imagem", MessageBoxButton.OK, MessageBoxImage.Error);
-                }
+                OpenFileDialog openFileDialog = new OpenFileDialog { Filter = "Ficheiros de Imagem (*.jpg;*.jpeg;*.png)|*.jpg;*.jpeg;*.png", Title = "Selecionar Foto de Perfil" };
+                if (openFileDialog.ShowDialog() == true)
+                { _tempImagePathForEditing = openFileDialog.FileName; Debug.WriteLine($"[EditarPerfil.xaml.cs] Nova imagem selecionada: {_tempImagePathForEditing}"); UpdateProfileImageOnPageFromPath(_tempImagePathForEditing); }
             }
+            catch (Exception ex) { MessageBox.Show($"Erro ao selecionar imagem: {ex.Message}", "Erro"); Debug.WriteLine($"[EditarPerfil.xaml.cs] ERRO ChangePictureButton_Click: {ex}"); }
         }
 
         private void SaveProfileButton_Click(object sender, RoutedEventArgs e)
         {
-            var nameTextBox = this.FindName("NameTextBoxEdit") as TextBox;
-            var emailTextBox = this.FindName("EmailTextBoxEdit") as TextBox;
-
-            if (nameTextBox == null || emailTextBox == null)
+            Debug.WriteLine("[EditarPerfil.xaml.cs] SaveProfileButton_Click chamado.");
+            try
             {
-                MessageBox.Show("Erro: Controlos de edição não encontrados.", "Erro Interno", MessageBoxButton.OK, MessageBoxImage.Error);
-                return;
+                if (_mainWindowInstance == null || EditEmailTextBlock == null || EditNomePerfilTextBox == null)
+                { MessageBox.Show("Erro interno ao guardar perfil.", "Erro", MessageBoxButton.OK, MessageBoxImage.Error); Debug.WriteLine("[EditarPerfil.xaml.cs] ERRO SaveProfile: Instância ou controlo nulo."); return; }
+
+                string novoNome = EditNomePerfilTextBox.Text.Trim();
+                if (string.IsNullOrWhiteSpace(novoNome))
+                { MessageBox.Show("O nome de perfil não pode ser vazio.", "Validação", MessageBoxButton.OK, MessageBoxImage.Warning); EditNomePerfilTextBox.Focus(); return; }
+
+                string novoEmail = EditEmailTextBlock.Text.Trim();
+                if (string.IsNullOrWhiteSpace(novoEmail) || !Regex.IsMatch(novoEmail, @"^al\d{5}@alunos\.utad\.pt$", RegexOptions.IgnoreCase))
+                { MessageBox.Show("Formato de email inválido (ex: alxxxxx@alunos.utad.pt).", "Validação", MessageBoxButton.OK, MessageBoxImage.Warning); EditEmailTextBlock.Focus(); return; }
+
+                MainWindow.NomePerfilEditavel = novoNome;
+                MainWindow.EmailUtilizadorLogado = novoEmail;
+                MainWindow.CaminhoFotoUtilizadorLogado = _tempImagePathForEditing;
+
+                Debug.WriteLine($"[EditarPerfil.xaml.cs] Perfil guardado. Nome: {MainWindow.NomePerfilEditavel}, Email: {MainWindow.EmailUtilizadorLogado}, FotoPath: {MainWindow.CaminhoFotoUtilizadorLogado}");
+
+                _mainWindowInstance.NavigateToPage("Perfil do Utilizador");
+                MessageBox.Show("Perfil atualizado com sucesso!", "Sucesso", MessageBoxButton.OK, MessageBoxImage.Information);
             }
-
-            if (string.IsNullOrWhiteSpace(nameTextBox.Text))
-            {
-                MessageBox.Show("O nome não pode estar vazio.", "Validação", MessageBoxButton.OK, MessageBoxImage.Warning);
-                nameTextBox.Focus();
-                return;
-            }
-            if (string.IsNullOrWhiteSpace(emailTextBox.Text) || !emailTextBox.Text.Contains("@"))
-            {
-                MessageBox.Show("Email inválido.", "Validação", MessageBoxButton.OK, MessageBoxImage.Warning);
-                emailTextBox.Focus();
-                return;
-            }
-
-            // Atualiza os dados estáticos na MainWindow
-            MainWindow.NomeUtilizadorLogado = nameTextBox.Text;
-            MainWindow.EmailUtilizadorLogado = emailTextBox.Text;
-            MainWindow.CaminhoFotoUtilizadorLogado = _tempImagePath; // Usa o caminho da foto selecionada (ou o original se não mudou)
-
-            MessageBox.Show("Alterações guardadas!", "Sucesso", MessageBoxButton.OK, MessageBoxImage.Information);
-
-            // ATUALIZA A BARRA SUPERIOR NA MAINWINDOW!
-            _mainWindowInstance?.UpdateTopBarUserName(); // Atualiza o nome na barra superior
-            _mainWindowInstance?.UpdateUserProfilePicture(); // Atualiza a foto na barra superior
-
-            // Navegar de volta para a página de visualização do Perfil, passando a instância da MainWindow
-            _mainWindowInstance?.NavigateToPage(new Perfil(_mainWindowInstance), "Perfil do Utilizador");
+            catch (Exception ex) { MessageBox.Show($"Erro ao guardar perfil: {ex.Message}", "Erro", MessageBoxButton.OK, MessageBoxImage.Error); Debug.WriteLine($"[EditarPerfil.xaml.cs] ERRO SaveProfileButton_Click: {ex}"); }
         }
 
-        private void CancelEditButton_Click(object sender, RoutedEventArgs e)
-        {
-            // Navegar de volta para a página de visualização do Perfil, passando a instância da MainWindow
-            _mainWindowInstance?.NavigateToPage(new Perfil(_mainWindowInstance), "Perfil do Utilizador");
-        }
+        private void CancelEditButton_Click(object sender, RoutedEventArgs e) { Debug.WriteLine("[EditarPerfil.xaml.cs] CancelEditButton_Click chamado."); _mainWindowInstance?.NavigateToPage("Perfil do Utilizador"); }
     }
 }

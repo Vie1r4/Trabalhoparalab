@@ -2,7 +2,7 @@
 using System.Data;
 using System.Windows;
 
-namespace repos;
+namespace FinalLab;
 
 /// <summary>
 /// Interaction logic for App.xaml

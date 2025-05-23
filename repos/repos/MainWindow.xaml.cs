@@ -1,547 +1,150 @@
-﻿using System;
+﻿// Ficheiro: MainWindow.xaml.cs
+using System;
 using System.Collections.Generic;
-using System.Windows;
-using System.Windows.Controls;
-using System.Windows.Media;
-using System.Windows.Media.Imaging; // NECESSÁRIO PARA BitmapImage
-using Microsoft.Win32;
+using System.Diagnostics;
+using System.Globalization;
 using System.IO;
 using System.Linq;
+using System.Text;
 using System.Text.RegularExpressions;
-using System.Windows.Shapes;
-
-
+using System.Windows;
+using System.Windows.Controls;
+using System.Windows.Input;
+using System.Windows.Media;
+using System.Windows.Media.Imaging;
+using Microsoft.Win32;
+using FinalLab.Models;
 
 namespace FinalLab
 {
-    // Definição da classe Aluno
-    public class Aluno
-    {
-        public string NomeCompleto { get; }
-        public string NumeroAluno { get; }
-        public string Email { get; }
-        public string? Grupo { get; set; }
-
-        public Aluno(string nomeCompleto, string numeroAluno, string email, string? grupo = null)
-        {
-            NomeCompleto = nomeCompleto;
-            NumeroAluno = numeroAluno;
-            Email = email;
-            Grupo = grupo ?? "Sem Grupo";
-        }
-    }
-
     public partial class MainWindow : Window
     {
-        public static string NomeUtilizadorLogado { get; set; } = Environment.UserName;
-        public static string EmailUtilizadorLogado { get; set; } = $"{Environment.UserName.ToLower().Replace(" ", ".")}@exemplo.com";
-
-        // Defina o caminho para a imagem de perfil.
-        // Este valor deve ser atualizado pela página de Perfil.
-        public static string? CaminhoFotoUtilizadorLogado { get; set; }
-
+        public static string NomeUtilizadorSistema => Environment.UserName;
+        public static string EmailUtilizadorLogado { get; set; } = $"{Environment.UserName.Replace(" ", ".")}@alunos.utad.pt";
+        private static string? _caminhoFotoUtilizadorLogado;
+        public static string? CaminhoFotoUtilizadorLogado { get => _caminhoFotoUtilizadorLogado; set { if (_caminhoFotoUtilizadorLogado != value) { _caminhoFotoUtilizadorLogado = value; (Application.Current.MainWindow as MainWindow)?.UpdateUserProfilePictureEverywhere(); } } }
+        private static string? _nomePerfilEditavelInternal;
+        public static string NomePerfilEditavel { get { return _nomePerfilEditavelInternal ?? NomeUtilizadorSistema; } set { if (_nomePerfilEditavelInternal != value) { _nomePerfilEditavelInternal = value; (Application.Current.MainWindow as MainWindow)?.UpdateDisplayedUserNameAndProfilePage(); } } }
         private List<Tarefa> listaDeTarefasPrincipal = new List<Tarefa>();
-        private Border? tarefasViewContainer;
+        private Grid? tarefasViewContainer;
         private Grid? actualTaskTableGrid;
-
         private List<Aluno> listaDeAlunosPrincipal = new List<Aluno>();
-        private Border? alunosViewContainer;
+        private List<Grupo> listaDeGruposPrincipal = new List<Grupo>();
+        private Grid? alunosViewContainer;
         private Grid? actualAlunosTableGrid;
         private TextBox? pesquisaAlunosLocalTextBox;
         private TextBlock? placeholderPesquisaAlunosLocal;
+        private Grid? gruposViewContainer;
+        private Grid? actualGruposTableGrid;
 
         public MainWindow()
         {
-            InitializeComponent();
-
-            SetupTarefasView();
-            SetupAlunosView();
-            UpdateTopBarUserName();
-            UpdateUserProfilePicture();
-
-            if (tarefasViewContainer != null) NavigateToPage(tarefasViewContainer, "Gestão de Tarefas");
-
-            AtualizarContadoresSumario();
-        }
-
-        // Método público para que outras partes da aplicação (ex: Perfil.xaml.cs) possam forçar a atualização
-        public void UpdateUserProfilePicture()
-        {
-            if (this.FindName("UserProfileImageBrush") is ImageBrush imageBrush)
+            try
             {
-                imageBrush.ImageSource = null; // Limpa a imagem anterior para forçar recarregamento
-
-                if (!string.IsNullOrEmpty(CaminhoFotoUtilizadorLogado) && File.Exists(CaminhoFotoUtilizadorLogado))
-                {
-                    try
-                    {
-                        BitmapImage bitmap = new BitmapImage();
-                        bitmap.BeginInit();
-                        bitmap.UriSource = new Uri(CaminhoFotoUtilizadorLogado, UriKind.Absolute);
-                        bitmap.CacheOption = BitmapCacheOption.OnLoad; // Carrega a imagem e liberta o ficheiro
-                        bitmap.CreateOptions = BitmapCreateOptions.IgnoreImageCache; // Tenta ignorar o cache do disco
-                        bitmap.EndInit();
-
-                        imageBrush.ImageSource = bitmap;
-
-                        // Restaurar o Fill da Ellipse se estava com cor de fallback
-                        if (this.FindName("UserProfileImageEllipse") is Ellipse ellipse)
-                        {
-                            ellipse.Fill = imageBrush; // Reatribuir o ImageBrush
-                        }
-                    }
-                    catch (Exception ex)
-                    {
-                        Console.WriteLine($"Erro ao carregar imagem de perfil: {ex.Message}");
-                        imageBrush.ImageSource = null;
-                        if (this.FindName("UserProfileImageEllipse") is Ellipse ellipse)
-                        {
-                            ellipse.Fill = new SolidColorBrush(Colors.LightGray);
-                        }
-                    }
-                }
-                else
-                {
-                    imageBrush.ImageSource = null;
-                    if (this.FindName("UserProfileImageEllipse") is Ellipse ellipse)
-                    {
-                        ellipse.Fill = new SolidColorBrush(Colors.Gainsboro);
-                    }
-                    // Removido Console.WriteLine para não poluir se for chamado frequentemente
-                }
+                InitializeComponent();
+                Debug.WriteLine("[MW] Init.");
+                SetupAlunosView();
+                SetupTarefasView();
+                SetupGruposView();
+                Debug.WriteLine("[MW] Setups OK.");
+                UpdateDisplayedUserNameAndProfilePage();
+                UpdateUserProfilePictureEverywhere();
+                Debug.WriteLine("[MW] UI TopBar OK.");
+                NavigateToPage("Tarefas");
+                AtualizarContadoresSumario();
+                Debug.WriteLine("[MW] Construtor FIM.");
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Erro Init MW: {ex.Message}\n{ex.StackTrace}", "Erro Fatal");
+                Debug.WriteLine($"[MW] ERRO FATAL CONSTRUTOR: {ex}");
+                Application.Current.Shutdown(1);
             }
         }
+
+        public void NavigateToPage(string pageName, object? optionalContent = null) { try { if (PageTitleTextBlock == null || MainContentArea == null) { Debug.WriteLine("[MW] ERR Nav: Controles de UI nulos."); return; } string title = pageName; object? content = optionalContent; switch (pageName) { case "Alunos": title = "Gestão Alunos"; content = alunosViewContainer; break; case "Tarefas": title = "Gestão Tarefas"; content = tarefasViewContainer; break; case "Grupos": title = "Gestão Grupos"; content = gruposViewContainer; break; case "Perfil do Utilizador": title = "Meu Perfil"; content ??= new Perfil(this); break; case "Editar Perfil": title = "Editar Perfil"; content ??= new EditarPerfil(this); break; case "Pauta": title = "Pauta"; content ??= new TextBlock { Text = "Pauta em desenvolvimento.", Margin = new Thickness(10) }; break; default: Debug.WriteLine($"[MW] Nav: Pagina '{pageName}' desconhecida."); break; } PageTitleTextBlock.Text = title; MainContentArea.Content = content; UpdateUserProfilePictureEverywhere(); if (AdicionarAlunoButton != null) AdicionarAlunoButton.Visibility = (pageName == "Alunos") ? Visibility.Visible : Visibility.Collapsed; if (CriarTarefaButton != null) CriarTarefaButton.Visibility = (pageName == "Tarefas") ? Visibility.Visible : Visibility.Collapsed; if (FindName("CriarGrupoButton") is Button btn) btn.Visibility = (pageName == "Grupos") ? Visibility.Visible : Visibility.Collapsed; } catch (Exception ex) { MessageBox.Show($"Erro nav '{pageName}': {ex.Message}", "Erro"); Debug.WriteLine($"[MW] ERR Nav '{pageName}': {ex}"); } }
+        public void UpdateUserProfilePictureEverywhere() { BitmapImage? bmp = null; if (!string.IsNullOrEmpty(CaminhoFotoUtilizadorLogado) && File.Exists(CaminhoFotoUtilizadorLogado)) { try { bmp = new BitmapImage(); bmp.BeginInit(); bmp.UriSource = new Uri(CaminhoFotoUtilizadorLogado, UriKind.Absolute); bmp.CacheOption = BitmapCacheOption.OnLoad; bmp.CreateOptions = BitmapCreateOptions.IgnoreImageCache; bmp.EndInit(); bmp.Freeze(); } catch (Exception ex) { Debug.WriteLine($"[MW] ERRO Bitmap: {ex.Message}"); bmp = null; } } if (TopBarUserImageBrush != null) TopBarUserImageBrush.ImageSource = bmp; if (MainContentArea.Content is Perfil p) p.UpdateProfileImageOnPage(bmp); if (MainContentArea.Content is EditarPerfil ep) ep.UpdateProfileImageOnPage(bmp); }
+        public void UpdateDisplayedUserNameAndProfilePage() { if (TopBarUserName != null) TopBarUserName.Text = NomePerfilEditavel; if (MainContentArea.Content is Perfil p) p.UpdateProfileNameOnPage(NomePerfilEditavel); }
 
         private void AtualizarContadoresSumario()
         {
-            if (this.FindName("TotalAlunosTextBlock") is TextBlock totalAlunosLabel)
-            {
-                totalAlunosLabel.Text = $"Total de Alunos: {listaDeAlunosPrincipal.Count}";
-            }
+            if (TotalAlunosTextBlock != null) TotalAlunosTextBlock.Text = listaDeAlunosPrincipal.Count.ToString();
+            if (TotalTarefasTextBlock != null) TotalTarefasTextBlock.Text = listaDeTarefasPrincipal.Count.ToString();
+            // ATUALIZA O CONTADOR DE GRUPOS
+            if (TotalGruposTextBlock != null) TotalGruposTextBlock.Text = listaDeGruposPrincipal.Count.ToString();
+            Debug.WriteLine($"[MW] Contadores atualizados: Alunos={listaDeAlunosPrincipal.Count}, Tarefas={listaDeTarefasPrincipal.Count}, Grupos={listaDeGruposPrincipal.Count}");
         }
 
-        public void UpdateTopBarUserName()
-        {
-            if (this.FindName("TopBarUserNameTextBlock") is TextBlock userNameLabel)
-            {
-                userNameLabel.Text = NomeUtilizadorLogado;
-            }
-        }
-        private void SetupTarefasView()
-        {
-            tarefasViewContainer = new Border { BorderBrush = Brushes.LightGray, BorderThickness = new Thickness(1.0) };
-            actualTaskTableGrid = new Grid();
-            actualTaskTableGrid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
-            actualTaskTableGrid.RowDefinitions.Add(new RowDefinition { Height = new GridLength(1, GridUnitType.Star) });
+        private void SetupAlunosView() { try { alunosViewContainer = new Grid { Margin = new Thickness(0) }; alunosViewContainer.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto }); alunosViewContainer.RowDefinitions.Add(new RowDefinition { Height = new GridLength(1, GridUnitType.Star) }); StackPanel hp = new StackPanel { Orientation = Orientation.Vertical, Margin = new Thickness(0, 0, 0, 10) }; Grid.SetRow(hp, 0); alunosViewContainer.Children.Add(hp); hp.Children.Add(new TextBlock { Text = "Lista Alunos", FontSize = 18, FontWeight = FontWeights.Bold, Margin = new Thickness(0, 0, 0, 10) }); Grid sag = new Grid(); sag.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) }); sag.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto }); hp.Children.Add(sag); Grid pcg = new Grid(); Grid.SetColumn(pcg, 0); sag.Children.Add(pcg); placeholderPesquisaAlunosLocal = new TextBlock { Text = "Pesquisar aluno...", Foreground = Brushes.Gray, VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(5, 0, 0, 0), IsHitTestVisible = false }; pcg.Children.Add(placeholderPesquisaAlunosLocal); pesquisaAlunosLocalTextBox = new TextBox { Padding = new Thickness(5), VerticalContentAlignment = VerticalAlignment.Center, Background = Brushes.Transparent }; pesquisaAlunosLocalTextBox.TextChanged += PesquisaAlunosLocalTextBox_TextChanged; pcg.Children.Add(pesquisaAlunosLocalTextBox); Button ib = new Button { Content = "Inserir Ficheiro", Padding = new Thickness(10, 5, 10, 5), HorizontalAlignment = HorizontalAlignment.Right, Style = (Style)FindResource("ActionButtonStyle") }; ib.Click += InserirFicheiroAlunosButton_Click; Grid.SetColumn(ib, 1); sag.Children.Add(ib); ScrollViewer sv = new ScrollViewer { VerticalScrollBarVisibility = ScrollBarVisibility.Auto }; Grid.SetRow(sv, 1); alunosViewContainer.Children.Add(sv); actualAlunosTableGrid = new Grid { Margin = new Thickness(0, 5, 0, 0), ShowGridLines = false }; sv.Content = actualAlunosTableGrid; actualAlunosTableGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(2.5, GridUnitType.Star), MinWidth = 180 }); actualAlunosTableGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star), MinWidth = 100 }); actualAlunosTableGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(2.5, GridUnitType.Star), MinWidth = 200 }); actualAlunosTableGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1.5, GridUnitType.Star), MinWidth = 120 }); actualAlunosTableGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto, MinWidth = 80 }); actualAlunosTableGrid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto }); string[] hdrs = { "Nome", "Nº Aluno", "Email", "Grupo", "Ações" }; for (int i = 0; i < hdrs.Length; i++) { var c = CreateTableCellUI(hdrs[i], true); Grid.SetColumn(c, i); Grid.SetRow(c, 0); actualAlunosTableGrid.Children.Add(c); } AtualizarTabelaDeAlunosUI(); } catch (Exception ex) { Debug.WriteLine($"[MW] ERR SetupAlunos: {ex}"); } }
+        private void SetupTarefasView() { try { tarefasViewContainer = new Grid { Margin = new Thickness(0) }; tarefasViewContainer.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto }); tarefasViewContainer.RowDefinitions.Add(new RowDefinition { Height = new GridLength(1, GridUnitType.Star) }); tarefasViewContainer.Children.Add(new TextBlock { Text = "Lista Tarefas", FontSize = 18, FontWeight = FontWeights.Bold, Margin = new Thickness(0, 0, 0, 10) }); ScrollViewer sv = new ScrollViewer { VerticalScrollBarVisibility = ScrollBarVisibility.Auto }; Grid.SetRow(sv, 1); tarefasViewContainer.Children.Add(sv); actualTaskTableGrid = new Grid { Margin = new Thickness(0, 5, 0, 0), ShowGridLines = false }; sv.Content = actualTaskTableGrid; actualTaskTableGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(2, GridUnitType.Star), MinWidth = 150 }); actualTaskTableGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(3, GridUnitType.Star), MinWidth = 220 }); actualTaskTableGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1.5, GridUnitType.Star), MinWidth = 120 }); actualTaskTableGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1.5, GridUnitType.Star), MinWidth = 120 }); actualTaskTableGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star), MinWidth = 80 }); actualTaskTableGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto, MinWidth = 80 }); actualTaskTableGrid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto }); string[] hdrs = { "Título", "Descrição", "Início", "Término", "Peso(%)", "Ações" }; for (int i = 0; i < hdrs.Length; i++) { var c = CreateTableCellUI(hdrs[i], true); Grid.SetColumn(c, i); Grid.SetRow(c, 0); actualTaskTableGrid.Children.Add(c); } AtualizarTabelaDeTarefasUI(); } catch (Exception ex) { Debug.WriteLine($"[MW] ERR SetupTarefas: {ex}"); } }
+        private void SetupGruposView() { try { gruposViewContainer = new Grid { Margin = new Thickness(0) }; gruposViewContainer.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto }); gruposViewContainer.RowDefinitions.Add(new RowDefinition { Height = new GridLength(1, GridUnitType.Star) }); gruposViewContainer.Children.Add(new TextBlock { Text = "Lista Grupos", FontSize = 18, FontWeight = FontWeights.Bold, Margin = new Thickness(0, 0, 0, 10) }); ScrollViewer sv = new ScrollViewer { VerticalScrollBarVisibility = ScrollBarVisibility.Auto }; Grid.SetRow(sv, 1); gruposViewContainer.Children.Add(sv); actualGruposTableGrid = new Grid { Margin = new Thickness(0, 5, 0, 0), ShowGridLines = false }; sv.Content = actualGruposTableGrid; actualGruposTableGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(3, GridUnitType.Star), MinWidth = 200 }); actualGruposTableGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1.5, GridUnitType.Star), MinWidth = 100 }); actualGruposTableGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto, MinWidth = 150 }); actualGruposTableGrid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto }); string[] hdrs = { "Nome Grupo", "Nº Alunos", "Ações" }; for (int i = 0; i < hdrs.Length; i++) { var c = CreateTableCellUI(hdrs[i], true); Grid.SetColumn(c, i); Grid.SetRow(c, 0); actualGruposTableGrid.Children.Add(c); } AtualizarTabelaDeGruposUI(); } catch (Exception ex) { Debug.WriteLine($"[MW] ERR SetupGrupos: {ex}"); } }
+        private void MainMenuPerfilButton_Click(object sender, RoutedEventArgs e) { Debug.WriteLine("[MW] MainMenuPerfilButton_Click."); try { NavigateToPage("Perfil do Utilizador"); } catch (Exception ex) { HandleClickError("MainMenuPerfilButton_Click", ex); } }
+        private void AlunosButton_Click(object sender, RoutedEventArgs e) { Debug.WriteLine("[MW] AlunosButton_Click."); try { NavigateToPage("Alunos"); } catch (Exception ex) { HandleClickError("AlunosButton_Click", ex); } }
+        private void TarefasButton_Click(object sender, RoutedEventArgs e) { Debug.WriteLine("[MW] TarefasButton_Click."); try { NavigateToPage("Tarefas"); } catch (Exception ex) { HandleClickError("TarefasButton_Click", ex); } }
+        private void GruposButton_Click(object sender, RoutedEventArgs e) { Debug.WriteLine("[MW] GruposButton_Click."); try { NavigateToPage("Grupos"); } catch (Exception ex) { HandleClickError("GruposButton_Click", ex); } }
+        private void PautaButton_Click(object sender, RoutedEventArgs e) { Debug.WriteLine("[MW] PautaButton_Click."); try { MessageBox.Show("A funcionalidade de Pauta ainda não se encontra implementada.", "Informação"); NavigateToPage("Pauta"); } catch (Exception ex) { HandleClickError("PautaButton_Click", ex); } }
+        public void AdicionarAlunoButton_Click(object sender, RoutedEventArgs e) { try { AdicionarAluno win = new AdicionarAluno { Owner = this }; if (win.ShowDialog() == true && win.NovoAluno != null) { Aluno al = win.NovoAluno; if (listaDeAlunosPrincipal.Any(a => a.NumeroAluno == al.NumeroAluno)) { MessageBox.Show("Nº aluno já existe.", "Erro"); return; } if (listaDeAlunosPrincipal.Any(a => a.Email.Equals(al.Email, StringComparison.OrdinalIgnoreCase))) { MessageBox.Show("Email já existe.", "Erro"); return; } listaDeAlunosPrincipal.Add(al); AssociarAlunoAGrupo(al, al.Grupo, true); AtualizarTabelaDeAlunosUI(); AtualizarTabelaDeGruposUI(); AtualizarContadoresSumario(); } } catch (Exception ex) { HandleClickError("AddAlunoBtn", ex); } }
+        public void CriarTarefaButton_Click(object sender, RoutedEventArgs e) { try { Criartarefa win = new Criartarefa { Owner = this }; if (win.ShowDialog() == true && win.NovaTarefa != null) { listaDeTarefasPrincipal.Add(win.NovaTarefa); AtualizarTabelaDeTarefasUI(); AtualizarContadoresSumario(); } } catch (Exception ex) { HandleClickError("CriarTarefaBtn", ex); } }
 
-            actualTaskTableGrid.ColumnDefinitions.Clear();
-            actualTaskTableGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(70, GridUnitType.Pixel) });
-            actualTaskTableGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(2, GridUnitType.Star) });
-            actualTaskTableGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(2.5, GridUnitType.Star) });
-            actualTaskTableGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1.5, GridUnitType.Star) });
-            actualTaskTableGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1.5, GridUnitType.Star) });
-            actualTaskTableGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
-            actualTaskTableGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
-
-            string[] headers = { "ID", "Título", "Descrição", "Início", "Término", "Peso (%)", "Ações" };
-            for (int i = 0; i < headers.Length; i++)
-            {
-                Border headerBorder = new Border { Background = new SolidColorBrush(Color.FromRgb(0xF0, 0xF0, 0xF0)), Padding = new Thickness(10, 5, 10, 5) };
-                TextBlock headerText = new TextBlock
-                {
-                    Text = headers[i],
-                    FontWeight = FontWeights.Bold,
-                    HorizontalAlignment = HorizontalAlignment.Center,
-                    VerticalAlignment = VerticalAlignment.Center
-                };
-                if (headers[i] == "Peso (%)" || headers[i] == "Descrição")
-                {
-                    headerText.TextWrapping = TextWrapping.Wrap;
-                }
-                headerBorder.Child = headerText;
-                Grid.SetRow(headerBorder, 0);
-                Grid.SetColumn(headerBorder, i);
-                actualTaskTableGrid?.Children.Add(headerBorder);
-            }
-            ScrollViewer taskScrollViewer = new ScrollViewer { VerticalScrollBarVisibility = ScrollBarVisibility.Auto, Content = actualTaskTableGrid };
-            if (tarefasViewContainer != null)
-            {
-                tarefasViewContainer.Child = taskScrollViewer;
-            }
-        }
-
-        private void SetupAlunosView()
-        {
-            alunosViewContainer = new Border { BorderBrush = Brushes.LightGray, BorderThickness = new Thickness(1.0) };
-
-            Grid layoutInternoAlunos = new Grid();
-            layoutInternoAlunos.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
-            layoutInternoAlunos.RowDefinitions.Add(new RowDefinition { Height = new GridLength(1, GridUnitType.Star) });
-
-            Grid searchBarGrid = new Grid { Margin = new Thickness(0, 0, 0, 10), Height = 32 };
-            Border searchBarBorder = new Border
-            {
-                Background = new SolidColorBrush(Color.FromRgb(0xF0, 0xF0, 0xF0)),
-                BorderBrush = Brushes.Gray,
-                BorderThickness = new Thickness(1),
-                CornerRadius = new CornerRadius(15)
-            };
-            searchBarGrid.Children.Add(searchBarBorder);
-
-            StackPanel searchBarContentPanel = new StackPanel { Orientation = Orientation.Horizontal, Margin = new Thickness(5, 0, 0, 0) };
-            TextBlock lupaIcon = new TextBlock
-            {
-                Text = "🔍",
-                FontFamily = new FontFamily("Segoe UI Emoji"),
-                FontSize = 14,
-                Foreground = Brushes.Gray,
-                VerticalAlignment = VerticalAlignment.Center,
-                Margin = new Thickness(5, 0, 5, 0)
-            };
-            searchBarContentPanel.Children.Add(lupaIcon);
-
-            Grid textBoxPlaceholderGrid = new Grid();
-            pesquisaAlunosLocalTextBox = new TextBox
-            {
-                Padding = new Thickness(5, 2, 5, 2),
-                VerticalContentAlignment = VerticalAlignment.Center,
-                Background = Brushes.Transparent,
-                BorderThickness = new Thickness(0),
-                MinWidth = 200
-            };
-            pesquisaAlunosLocalTextBox.TextChanged += PesquisaAlunosLocalTextBox_TextChanged;
-            textBoxPlaceholderGrid.Children.Add(pesquisaAlunosLocalTextBox);
-
-            placeholderPesquisaAlunosLocal = new TextBlock
-            {
-                Text = "Pesquisar alunos...",
-                Foreground = Brushes.Gray,
-                IsHitTestVisible = false,
-                VerticalAlignment = VerticalAlignment.Center,
-                HorizontalAlignment = HorizontalAlignment.Left,
-                Margin = new Thickness(7, 0, 0, 0),
-                Visibility = Visibility.Visible
-            };
-            textBoxPlaceholderGrid.Children.Add(placeholderPesquisaAlunosLocal);
-
-            searchBarContentPanel.Children.Add(textBoxPlaceholderGrid);
-            searchBarGrid.Children.Add(searchBarContentPanel);
-
-            Grid.SetRow(searchBarGrid, 0);
-            layoutInternoAlunos.Children.Add(searchBarGrid);
-
-            actualAlunosTableGrid = new Grid();
-            actualAlunosTableGrid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
-
-            actualAlunosTableGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(2, GridUnitType.Star) });
-            actualAlunosTableGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
-            actualAlunosTableGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(2, GridUnitType.Star) });
-            actualAlunosTableGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1.5, GridUnitType.Star) });
-            actualAlunosTableGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
-
-            string[] headers = { "Nome Completo", "Nº Aluno", "Email", "Grupo", "Ações" };
-            for (int i = 0; i < headers.Length; i++)
-            {
-                Border headerBorder = new Border { Background = new SolidColorBrush(Color.FromRgb(0xF0, 0xF0, 0xF0)), Padding = new Thickness(10.0) };
-                headerBorder.Child = new TextBlock { Text = headers[i], FontWeight = FontWeights.Bold, HorizontalAlignment = HorizontalAlignment.Center };
-                Grid.SetRow(headerBorder, 0);
-                Grid.SetColumn(headerBorder, i);
-                actualAlunosTableGrid?.Children.Add(headerBorder);
-            }
-
-            ScrollViewer alunosScrollViewer = new ScrollViewer { VerticalScrollBarVisibility = ScrollBarVisibility.Auto, Content = actualAlunosTableGrid };
-            Grid.SetRow(alunosScrollViewer, 1);
-            layoutInternoAlunos.Children.Add(alunosScrollViewer);
-
-            if (alunosViewContainer != null)
-            {
-                alunosViewContainer.Child = layoutInternoAlunos;
-            }
-        }
-        private void PesquisaAlunosLocalTextBox_TextChanged(object sender, TextChangedEventArgs e)
-        {
-            if (placeholderPesquisaAlunosLocal != null && pesquisaAlunosLocalTextBox != null)
-            {
-                placeholderPesquisaAlunosLocal.Visibility = string.IsNullOrEmpty(pesquisaAlunosLocalTextBox.Text) ? Visibility.Visible : Visibility.Collapsed;
-            }
-            AtualizarTabelaDeAlunosUI();
-        }
-
-        public void NavigateToPage(object? pageContent, string pageTitle = "Bem-vindo")
-        {
-            if (this.FindName("MainContentArea") is ContentControl mainContentArea &&
-                this.FindName("PageTitleTextBlock") is TextBlock titleTextBlock)
-            {
-                mainContentArea.Content = pageContent;
-                titleTextBlock.Text = pageTitle;
-
-                UpdateUserProfilePicture(); // Tenta atualizar a foto em cada navegação
-
-                bool isTarefasView = pageContent == tarefasViewContainer;
-                bool isAlunosView = pageContent == alunosViewContainer;
-                bool isPerfilView = pageContent is Perfil;
-
-                ShowContextSpecificControls(isTarefasView, isAlunosView, isPerfilView);
-
-                if (isTarefasView) AtualizarTabelaDeTarefasUI();
-                else if (isAlunosView) AtualizarTabelaDeAlunosUI();
-            }
-        }
-
-        private void ShowContextSpecificControls(bool showTarefasControls, bool showAlunosControls, bool showPerfilControls)
-        {
-            bool showCommonTopElements = showTarefasControls || showAlunosControls || showPerfilControls;
-            Visibility commonVisibility = showCommonTopElements ? Visibility.Visible : Visibility.Collapsed;
-
-            if (this.FindName("TopBarGrid") is Grid topBar) topBar.Visibility = commonVisibility;
-
-            Visibility summaryVisibility = (showTarefasControls || showAlunosControls) ? Visibility.Visible : Visibility.Collapsed;
-            if (this.FindName("SummaryBoxesStackPanel") is StackPanel summaryBoxes) summaryBoxes.Visibility = summaryVisibility;
-
-            if (this.FindName("CriarTarefaButton") is Button criarTarefaBtn) criarTarefaBtn.Visibility = showTarefasControls ? Visibility.Visible : Visibility.Collapsed;
-            if (this.FindName("AdicionarAlunoButton") is Button adicionarAlunoBtn) adicionarAlunoBtn.Visibility = showAlunosControls ? Visibility.Visible : Visibility.Collapsed;
-            if (this.FindName("InserirFicheiroAlunosButton") is Button inserirFicheiroBtn) inserirFicheiroBtn.Visibility = showAlunosControls ? Visibility.Visible : Visibility.Collapsed;
-        }
-
-        private void MainMenuPerfilButton_Click(object sender, RoutedEventArgs e)
+        private void CriarGrupoButton_Global_Click(object sender, RoutedEventArgs e)
         {
             try
             {
-                // Se a sua página Perfil precisa de uma referência à MainWindow para chamar UpdateUserProfilePicture:
-                Perfil perfilPage = new Perfil(this); // Crie um construtor em Perfil que aceite MainWindow
-                NavigateToPage(perfilPage, "Perfil do Utilizador");
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show($"Erro ao tentar abrir Perfil: {ex.Message}\nVerifique se Perfil.xaml e Perfil.xaml.cs existem e estão corretos.", "Erro");
-            }
-        }
-
-        private void AlunosButton_Click(object sender, RoutedEventArgs e)
-        {
-            NavigateToPage(alunosViewContainer, "Gestão de Alunos");
-        }
-        private void GruposButton_Click(object sender, RoutedEventArgs e)
-        {
-            MessageBox.Show("Grupos Clicado!");
-            NavigateToPage(null, "Grupos");
-        }
-        private void TarefasButton_Click(object sender, RoutedEventArgs e)
-        {
-            NavigateToPage(tarefasViewContainer, "Gestão de Tarefas");
-        }
-        private void PautaButton_Click(object sender, RoutedEventArgs e)
-        {
-            MessageBox.Show("Pauta Clicado!");
-            NavigateToPage(null, "Pauta de Avaliação");
-        }
-
-        private void CriarTarefaButton_Click(object sender, RoutedEventArgs e)
-        {
-            try
-            {
-                Criartarefa criarTarefaWin = new Criartarefa { Owner = this };
-                if (criarTarefaWin.ShowDialog() == true && criarTarefaWin.TarefaCriadaComSucesso)
+                var alunosCpy = listaDeAlunosPrincipal.Select(a => new Aluno(a.NomeCompleto, a.NumeroAluno, a.Email, a.Grupo)).ToList();
+                CriarGrupoWindow win = new CriarGrupoWindow(alunosCpy) { Owner = this };
+                if (win.ShowDialog() == true && win.GrupoCriadoEditado != null)
                 {
-                    if (criarTarefaWin.NovaTarefa != null) listaDeTarefasPrincipal.Add(criarTarefaWin.NovaTarefa);
-                    if (this.FindName("MainContentArea") is ContentControl mcc && mcc.Content == tarefasViewContainer) AtualizarTabelaDeTarefasUI();
-                }
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show($"Erro ao tentar abrir Criar Tarefa: {ex.Message}\nVerifique se Criartarefa.xaml/cs e a classe Tarefa estão corretos.", "Erro");
-            }
-        }
-
-        private void ApagarTarefaButton_Click(object sender, RoutedEventArgs e)
-        {
-            if (sender is Button btn && btn.Tag is Tarefa tarefa)
-            {
-                if (MessageBox.Show($"Tem a certeza que deseja apagar a tarefa '{tarefa.Titulo}'?", "Confirmar", MessageBoxButton.YesNo, MessageBoxImage.Warning) == MessageBoxResult.Yes)
-                {
-                    listaDeTarefasPrincipal.Remove(tarefa);
-                    if (this.FindName("MainContentArea") is ContentControl mcc && mcc.Content == tarefasViewContainer) AtualizarTabelaDeTarefasUI();
-                    MessageBox.Show($"Tarefa '{tarefa.Titulo}' apagada.", "Apagada", MessageBoxButton.OK, MessageBoxImage.Information);
-                }
-            }
-        }
-        private void AtualizarTabelaDeTarefasUI()
-        {
-            if (actualTaskTableGrid == null) return;
-
-            IEnumerable<Tarefa> tarefasParaExibir = listaDeTarefasPrincipal;
-
-            for (int i = actualTaskTableGrid.Children.Count - 1; i >= 0; i--)
-                if (Grid.GetRow(actualTaskTableGrid.Children[i]) > 0) actualTaskTableGrid.Children.RemoveAt(i);
-            while (actualTaskTableGrid.RowDefinitions.Count > 1) actualTaskTableGrid.RowDefinitions.RemoveAt(1);
-
-            int rowIndex = 1;
-            if (!tarefasParaExibir.Any())
-            {
-                if (actualTaskTableGrid.RowDefinitions.Count <= 1) actualTaskTableGrid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
-                TextBlock msgVazio = new TextBlock { Text = "Nenhuma tarefa encontrada.", Margin = new Thickness(10), FontStyle = FontStyles.Italic, HorizontalAlignment = HorizontalAlignment.Center };
-                Grid.SetRow(msgVazio, 1); Grid.SetColumnSpan(msgVazio, actualTaskTableGrid.ColumnDefinitions.Count);
-                actualTaskTableGrid.Children.Add(msgVazio);
-            }
-            else
-            {
-                foreach (var tarefa in tarefasParaExibir)
-                {
-                    if (actualTaskTableGrid.RowDefinitions.Count <= rowIndex)
-                        actualTaskTableGrid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
-
-                    actualTaskTableGrid.Children.Add(CreateTableCellUI(tarefa.Id.ToString().Substring(0, Math.Min(8, tarefa.Id.ToString().Length)), rowIndex, 0, actualTaskTableGrid));
-                    actualTaskTableGrid.Children.Add(CreateTableCellUI(tarefa.Titulo, rowIndex, 1, actualTaskTableGrid));
-                    actualTaskTableGrid.Children.Add(CreateTableCellUI(tarefa.Descricao ?? "-", rowIndex, 2, actualTaskTableGrid));
-                    actualTaskTableGrid.Children.Add(CreateTableCellUI(tarefa.DataHoraInicio.ToString("g"), rowIndex, 3, actualTaskTableGrid));
-                    actualTaskTableGrid.Children.Add(CreateTableCellUI(tarefa.DataHoraTermino.ToString("g"), rowIndex, 4, actualTaskTableGrid));
-                    actualTaskTableGrid.Children.Add(CreateTableCellUI($"{tarefa.Peso}", rowIndex, 5, actualTaskTableGrid));
-
-                    Button btnApagar = new Button { Content = "Apagar", Tag = tarefa, Margin = new Thickness(5, 2, 5, 2), Padding = new Thickness(5, 2, 5, 2), Foreground = Brushes.Red };
-                    btnApagar.Click += ApagarTarefaButton_Click;
-                    Grid.SetRow(btnApagar, rowIndex); Grid.SetColumn(btnApagar, 6);
-                    actualTaskTableGrid.Children.Add(btnApagar);
-                    rowIndex++;
-                }
-            }
-        }
-
-        private void AdicionarAlunoButton_Click(object sender, RoutedEventArgs e)
-        {
-            try
-            {
-                AdicionarAluno adicionarAlunoWin = new AdicionarAluno { Owner = this };
-                if (adicionarAlunoWin.ShowDialog() == true && adicionarAlunoWin.AlunoAdicionadoComSucesso)
-                {
-                    if (adicionarAlunoWin.NovoAluno != null) listaDeAlunosPrincipal.Add(adicionarAlunoWin.NovoAluno);
-                    AtualizarTabelaDeAlunosUI(); // Deveria ser AtualizarTabelaDeALUNOSUI aqui
-                    AtualizarContadoresSumario();
-                }
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show($"Erro ao tentar abrir Adicionar Aluno: {ex.Message}\nVerifique se AdicionarAluno.xaml e AdicionarAluno.xaml.cs existem e estão corretos.", "Erro");
-            }
-        }
-
-        private void InserirFicheiroAlunosButton_Click(object sender, RoutedEventArgs e)
-        {
-            OpenFileDialog openFileDialog = new OpenFileDialog
-            {
-                Title = "Selecionar Ficheiro de Alunos (CSV)",
-                Filter = "Ficheiros CSV (*.csv)|*.csv|Todos os Ficheiros (*.*)|*.*",
-                FilterIndex = 1,
-                DefaultExt = ".csv",
-                CheckFileExists = true,
-                CheckPathExists = true
-            };
-            if (openFileDialog.ShowDialog() == true)
-            {
-                string filePath = openFileDialog.FileName;
-                try
-                {
-                    int numAlunosAntes = listaDeAlunosPrincipal.Count; ProcessarCSV(filePath);
-                    int numAlunosDepois = listaDeAlunosPrincipal.Count;
-                    if (numAlunosDepois > numAlunosAntes) { AtualizarTabelaDeAlunosUI(); AtualizarContadoresSumario(); } // Corrigido
-                    MessageBox.Show($"Importação de alunos concluída. {numAlunosDepois - numAlunosAntes} alunos adicionados. Verifique a tabela e a janela 'Output' para detalhes.", "Importação", MessageBoxButton.OK, MessageBoxImage.Information);
-                }
-                catch (Exception ex) { MessageBox.Show($"Ocorreu um erro ao processar o ficheiro: {ex.Message}", "Erro de Importação", MessageBoxButton.OK, MessageBoxImage.Error); }
-            }
-        }
-        private void ProcessarCSV(string filePath)
-        {
-            var linhas = File.ReadAllLines(filePath, System.Text.Encoding.UTF8); bool cabecalhoIgnorado = false;
-            int alunosAdicionadosComSucesso = 0; int linhaNumeroAtual = 0;
-            Console.WriteLine($"--- Iniciando processamento do CSV: {filePath} ---");
-            foreach (var linhaOriginal in linhas)
-            {
-                linhaNumeroAtual++; string linhaLimpa = linhaOriginal.Trim();
-                if (string.IsNullOrWhiteSpace(linhaLimpa)) { Console.WriteLine($"Linha {linhaNumeroAtual} ignorada (vazia)."); continue; }
-                if (!cabecalhoIgnorado) { cabecalhoIgnorado = true; Console.WriteLine($"Linha {linhaNumeroAtual} (Cabeçalho) ignorada: \"{linhaLimpa}\""); continue; }
-                var colunas = linhaLimpa.Split(',');
-                Console.WriteLine($"Linha {linhaNumeroAtual} processando: \"{linhaLimpa}\". Colunas encontradas: {colunas.Length}");
-                if (colunas.Length >= 3)
-                {
-                    try
+                    Grupo gJanela = win.GrupoCriadoEditado;
+                    if (listaDeGruposPrincipal.Any(g => g.Nome.Equals(gJanela.Nome, StringComparison.OrdinalIgnoreCase)))
                     {
-                        string nome = colunas[0].Trim(); string numero = colunas[1].Trim(); string email = colunas[2].Trim();
-                        string? grupo = (colunas.Length > 3 && !string.IsNullOrWhiteSpace(colunas[3])) ? colunas[3].Trim() : null;
-                        Console.WriteLine($"  Dados extraídos: Nome='{nome}', Numero='{numero}', Email='{email}', Grupo='{grupo ?? "N/A"}'");
-                        if (string.IsNullOrWhiteSpace(nome) || string.IsNullOrWhiteSpace(numero) || string.IsNullOrWhiteSpace(email))
-                        { Console.WriteLine($"  -> Linha {linhaNumeroAtual} IGNORADA (dados essenciais em falta)."); continue; }
-                        if (!Regex.IsMatch(email, @"^[^@\s]+@[^@\s]+\.[^@\s]+$"))
-                        { Console.WriteLine($"  -> Linha {linhaNumeroAtual} IGNORADA (formato de email inválido: '{email}')."); continue; }
-                        listaDeAlunosPrincipal.Add(new Aluno(nome, numero, email, grupo)); alunosAdicionadosComSucesso++;
-                        Console.WriteLine($"  -> Aluno ADICIONADO: {nome}");
+                        MessageBox.Show($"Grupo '{gJanela.Nome}' já existe.", "Erro"); return;
                     }
-                    catch (IndexOutOfRangeException) { Console.WriteLine($"  ERRO na Linha {linhaNumeroAtual}: Formato de colunas inesperado. Linha: \"{linhaOriginal}\""); }
-                    catch (Exception ex) { Console.WriteLine($"  ERRO na Linha {linhaNumeroAtual}: \"{linhaOriginal}\". Detalhes: {ex.Message}"); }
+                    Grupo gNovo = new Grupo(gJanela.Id, gJanela.Nome);
+                    listaDeGruposPrincipal.Add(gNovo);
+                    foreach (var alVM in gJanela.ListaDeAlunosNoGrupo)
+                    {
+                        var alReal = listaDeAlunosPrincipal.FirstOrDefault(a => a.NumeroAluno == alVM.NumeroAluno);
+                        if (alReal != null) AssociarAlunoAGrupo(alReal, gNovo.Nome, false);
+                    }
+                    AtualizarTabelaDeGruposUI();
+                    AtualizarTabelaDeAlunosUI();
+                    AtualizarContadoresSumario(); // <-- CHAMAR AQUI
                 }
-                else { Console.WriteLine($"Linha {linhaNumeroAtual} IGNORADA (formato incorreto - esperadas >=3 colunas, encontradas: {colunas.Length}): \"{linhaOriginal}\""); }
             }
-            Console.WriteLine($"--- Processamento CSV concluído. {alunosAdicionadosComSucesso} alunos adicionados. ---");
+            catch (Exception ex) { HandleClickError("CriarGrupoGlobalBtn", ex); }
         }
 
-        private void ApagarAlunoButton_Click(object sender, RoutedEventArgs e)
+        private void AtualizarTabelaDeAlunosUI() { try { if (actualAlunosTableGrid == null) return; while (actualAlunosTableGrid.RowDefinitions.Count > 1) actualAlunosTableGrid.RowDefinitions.RemoveAt(1); var rem = actualAlunosTableGrid.Children.OfType<UIElement>().Where(c => Grid.GetRow(c) > 0).ToList(); foreach (var c in rem) actualAlunosTableGrid.Children.Remove(c); string filtro = pesquisaAlunosLocalTextBox?.Text.ToLowerInvariant() ?? ""; var filtrados = listaDeAlunosPrincipal.Where(a => string.IsNullOrWhiteSpace(filtro) || a.NomeCompleto.ToLowerInvariant().Contains(filtro) || a.NumeroAluno.Contains(filtro) || a.Email.ToLowerInvariant().Contains(filtro)).ToList(); if (!filtrados.Any()) { actualAlunosTableGrid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto }); var mb = CreateTableCellUI(string.IsNullOrWhiteSpace(filtro) ? "Sem alunos." : "Nenhum aluno encontrado."); if (mb.Child is TextBlock tb) tb.HorizontalAlignment = HorizontalAlignment.Center; Grid.SetRow(mb, 1); Grid.SetColumnSpan(mb, actualAlunosTableGrid.ColumnDefinitions.Count); actualAlunosTableGrid.Children.Add(mb); return; } for (int i = 0; i < filtrados.Count; i++) { var al = filtrados[i]; int r = i + 1; actualAlunosTableGrid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto }); object[] d = { al.NomeCompleto, al.NumeroAluno, al.Email, al.Grupo }; for (int j = 0; j < d.Length; j++) { var c = CreateTableCellUI(d[j]); Grid.SetRow(c, r); Grid.SetColumn(c, j); actualAlunosTableGrid.Children.Add(c); } Button bd = new Button { Content = "Apagar", Tag = al, Padding = new Thickness(5, 2, 5, 2), Style = (Style)FindResource("ActionButtonStyle"), Background = Brushes.IndianRed }; bd.Click += ApagarAlunoButton_Click; var ca = CreateTableCellUI(bd, false, true); Grid.SetRow(ca, r); Grid.SetColumn(ca, 4); actualAlunosTableGrid.Children.Add(ca); } } catch (Exception ex) { Debug.WriteLine($"[MW] ERR UpdAlunosTbl: {ex}"); } }
+        private void AtualizarTabelaDeTarefasUI() { try { if (actualTaskTableGrid == null) return; while (actualTaskTableGrid.RowDefinitions.Count > 1) actualTaskTableGrid.RowDefinitions.RemoveAt(1); var rem = actualTaskTableGrid.Children.OfType<UIElement>().Where(c => Grid.GetRow(c) > 0).ToList(); foreach (var c in rem) actualTaskTableGrid.Children.Remove(c); if (!listaDeTarefasPrincipal.Any()) { actualTaskTableGrid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto }); var mb = CreateTableCellUI("Sem tarefas."); if (mb.Child is TextBlock tb) tb.HorizontalAlignment = HorizontalAlignment.Center; Grid.SetRow(mb, 1); Grid.SetColumnSpan(mb, actualTaskTableGrid.ColumnDefinitions.Count); actualTaskTableGrid.Children.Add(mb); return; } for (int i = 0; i < listaDeTarefasPrincipal.Count; i++) { var t = listaDeTarefasPrincipal[i]; int r = i + 1; actualTaskTableGrid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto }); object[] d = { t.Titulo, t.Descricao ?? "N/D", t.DataHoraInicio.ToString("g"), t.DataHoraTermino.ToString("g"), t.Peso + "%" }; for (int j = 0; j < d.Length; j++) { var c = CreateTableCellUI(d[j]); Grid.SetRow(c, r); Grid.SetColumn(c, j); actualTaskTableGrid.Children.Add(c); } Button bd = new Button { Content = "Apagar", Tag = t, Padding = new Thickness(5, 2, 5, 2), Style = (Style)FindResource("ActionButtonStyle"), Background = Brushes.IndianRed }; bd.Click += ApagarTarefaButton_Click; var ca = CreateTableCellUI(bd, false, true); Grid.SetRow(ca, r); Grid.SetColumn(ca, 5); actualTaskTableGrid.Children.Add(ca); } } catch (Exception ex) { Debug.WriteLine($"[MW] ERR UpdTarefasTbl: {ex}"); } }
+        private void AtualizarTabelaDeGruposUI() { try { if (actualGruposTableGrid == null) return; while (actualGruposTableGrid.RowDefinitions.Count > 1) actualGruposTableGrid.RowDefinitions.RemoveAt(1); var rem = actualGruposTableGrid.Children.OfType<UIElement>().Where(c => Grid.GetRow(c) > 0).ToList(); foreach (var c in rem) actualGruposTableGrid.Children.Remove(c); if (!listaDeGruposPrincipal.Any()) { actualGruposTableGrid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto }); var mb = CreateTableCellUI("Sem grupos."); if (mb.Child is TextBlock tb) tb.HorizontalAlignment = HorizontalAlignment.Center; Grid.SetRow(mb, 1); Grid.SetColumnSpan(mb, actualGruposTableGrid.ColumnDefinitions.Count); actualGruposTableGrid.Children.Add(mb); return; } for (int i = 0; i < listaDeGruposPrincipal.Count; i++) { var g = listaDeGruposPrincipal[i]; int r = i + 1; actualGruposTableGrid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto }); object[] d = { g.Nome, g.ListaDeAlunosNoGrupo.Count }; for (int j = 0; j < d.Length; j++) { var c = CreateTableCellUI(d[j]); Grid.SetRow(c, r); Grid.SetColumn(c, j); actualGruposTableGrid.Children.Add(c); } StackPanel sp = new StackPanel { Orientation = Orientation.Horizontal }; Button be = new Button { Content = "Editar", Tag = g, Padding = new Thickness(5, 2, 5, 2), Margin = new Thickness(0, 0, 5, 0), Style = (Style)FindResource("ActionButtonStyle") }; be.Click += EditarGrupoButton_Click; sp.Children.Add(be); Button bd = new Button { Content = "Apagar", Tag = g, Padding = new Thickness(5, 2, 5, 2), Style = (Style)FindResource("ActionButtonStyle"), Background = Brushes.IndianRed }; bd.Click += ApagarGrupoButton_Click; sp.Children.Add(bd); var ca = CreateTableCellUI(sp, false, true); Grid.SetRow(ca, r); Grid.SetColumn(ca, 2); actualGruposTableGrid.Children.Add(ca); } } catch (Exception ex) { Debug.WriteLine($"[MW] ERR UpdGruposTbl: {ex}"); } }
+        private void ApagarAlunoButton_Click(object sender, RoutedEventArgs e) { try { if (sender is Button b && b.Tag is Aluno al && MessageBox.Show($"Apagar '{al.NomeCompleto}'?", "Conf.", MessageBoxButton.YesNo) == MessageBoxResult.Yes) { AssociarAlunoAGrupo(al, "Sem Grupo Atribuído"); listaDeAlunosPrincipal.Remove(al); AtualizarTabelaDeAlunosUI(); AtualizarTabelaDeGruposUI(); AtualizarContadoresSumario(); } } catch (Exception ex) { HandleClickError("ApagarAlunoBtn", ex); } }
+        private void InserirFicheiroAlunosButton_Click(object sender, RoutedEventArgs e) { Debug.WriteLine("[MW] InserirFicheiroAlunosButton_Click chamado."); try { OpenFileDialog ofd = new OpenFileDialog { Filter = "CSV (*.csv)|*.csv", Title = "Sel. CSV" }; if (ofd.ShowDialog() == true) { if (File.Exists(ofd.FileName)) ProcessarCSV(ofd.FileName); else MessageBox.Show("Ficheiro não existe.", "Erro"); } } catch (Exception ex) { HandleClickError("InserirCSVBtn", ex); } }
+        private void ProcessarCSV(string filePath) { Debug.WriteLine($"[MainWindow] ProcessarCSV iniciado para o ficheiro: {filePath}"); List<string> linhasLidas = new List<string>(); bool codificacaoSucesso = false; try { linhasLidas = File.ReadAllLines(filePath, Encoding.UTF8).ToList(); if (linhasLidas.Any(l => l.Contains(""))) { Debug.WriteLine("[MainWindow] UTF-8 leu, mas com caracteres de substituição. Tentando Windows-1252..."); } else { Debug.WriteLine($"[MainWindow] Lidas {linhasLidas.Count} linhas via UTF-8."); codificacaoSucesso = true; } } catch (Exception ex) { Debug.WriteLine($"[MainWindow] ERRO ao ler CSV com UTF-8: {ex.Message}. Tentando Windows-1252..."); } if (!codificacaoSucesso) { try { Encoding windows1252 = Encoding.GetEncoding("Windows-1252"); linhasLidas = File.ReadAllLines(filePath, windows1252).ToList(); if (linhasLidas.Any(l => l.Contains(""))) { Debug.WriteLine("[MainWindow] Windows-1252 leu, mas com caracteres de substituição. Tentando padrão do sistema..."); } else { Debug.WriteLine($"[MainWindow] Lidas {linhasLidas.Count} linhas via Windows-1252."); codificacaoSucesso = true; } } catch (Exception ex) { Debug.WriteLine($"[MainWindow] ERRO ao ler CSV com Windows-1252: {ex.Message}. Tentando padrão do sistema..."); } } if (!codificacaoSucesso) { try { linhasLidas = File.ReadAllLines(filePath).ToList(); Debug.WriteLine($"[MainWindow] Lidas {linhasLidas.Count} linhas via codificação padrão do sistema."); codificacaoSucesso = true; } catch (Exception ex) { MessageBox.Show($"Erro fatal ao ler o ficheiro CSV: {ex.Message}", "Erro de Leitura", MessageBoxButton.OK, MessageBoxImage.Error); Debug.WriteLine($"[MainWindow] ERRO FATAL ao ler o ficheiro em ProcessarCSV: {ex}"); return; } } if (!linhasLidas.Any() && codificacaoSucesso && File.Exists(filePath)) { Debug.WriteLine("[MainWindow] O ficheiro parece estar vazio ou não foi possível ler o conteúdo corretamente."); } int alunosAdicionadosComSucesso = 0; int linhasProcessadas = 0; int linhasIgnoradasTotal = 0; foreach (var linhaOriginal in linhasLidas) { linhasProcessadas++; string linha = linhaOriginal.Trim(); Debug.WriteLine($"[CSV Line {linhasProcessadas}] Processando: '{linhaOriginal}' (Trim: '{linha}')"); if (string.IsNullOrWhiteSpace(linha)) { Debug.WriteLine($"[CSV Line {linhasProcessadas}] IGNORADA: Linha vazia."); linhasIgnoradasTotal++; continue; } string[] colunas = linha.Split(','); Debug.WriteLine($"[CSV Line {linhasProcessadas}] Dividida em {colunas.Length} colunas."); if (colunas.Length < 3) { Debug.WriteLine($"[CSV Line {linhasProcessadas}] IGNORADA: Colunas insuficientes ({colunas.Length})."); linhasIgnoradasTotal++; continue; } string nome = colunas[0].Trim(); string numero = colunas[1].Trim(); string email = colunas[2].Trim(); string? grupoNomeCsv = colunas.Length > 3 ? colunas[3].Trim() : null; if (string.IsNullOrWhiteSpace(grupoNomeCsv)) grupoNomeCsv = null; Debug.WriteLine($"[CSV Line {linhasProcessadas}] Dados extraídos: Nome='{nome}', Numero='{numero}', Email='{email}', Grupo='{grupoNomeCsv ?? "N/A"}'"); if (string.IsNullOrWhiteSpace(nome) || string.IsNullOrWhiteSpace(numero) || string.IsNullOrWhiteSpace(email)) { Debug.WriteLine($"[CSV Line {linhasProcessadas}] IGNORADA: Campos essenciais vazios."); linhasIgnoradasTotal++; continue; } if (!Regex.IsMatch(email, @"^al\d{5}@alunos\.utad\.pt$", RegexOptions.IgnoreCase)) { Debug.WriteLine($"[CSV Line {linhasProcessadas}] IGNORADA: Email inválido ('{email}')."); linhasIgnoradasTotal++; continue; } if (listaDeAlunosPrincipal.Any(a => a.NumeroAluno == numero || a.Email.Equals(email, StringComparison.OrdinalIgnoreCase))) { Debug.WriteLine($"[CSV Line {linhasProcessadas}] IGNORADA: Aluno duplicado (Num='{numero}' ou Email='{email}')."); linhasIgnoradasTotal++; continue; } try { Aluno novoAluno = new Aluno(nome, numero, email, grupoNomeCsv); listaDeAlunosPrincipal.Add(novoAluno); alunosAdicionadosComSucesso++; Debug.WriteLine($"[CSV Line {linhasProcessadas}] SUCESSO: '{nome}' add."); if (!string.IsNullOrWhiteSpace(novoAluno.Grupo) && novoAluno.Grupo != "Sem Grupo Atribuído") AssociarAlunoAGrupo(novoAluno, novoAluno.Grupo, true); } catch (ArgumentException argEx) { Debug.WriteLine($"[CSV Ln{linhasProcessadas}] ERRO validação Aluno: {argEx.Message}"); linhasIgnoradasTotal++; } catch (Exception ex) { Debug.WriteLine($"[CSV Ln{linhasProcessadas}] ERRO criar/associar: {ex.Message}"); linhasIgnoradasTotal++; } } Debug.WriteLine($"[MainWindow] CSV fim. Add: {alunosAdicionadosComSucesso}. Ign: {linhasIgnoradasTotal}."); MessageBox.Show($"{alunosAdicionadosComSucesso} aluno(s) importado(s).\n{linhasIgnoradasTotal} linha(s) ignorada(s).", "Importação"); AtualizarTabelaDeAlunosUI(); AtualizarTabelaDeGruposUI(); AtualizarContadoresSumario(); }
+        private void PesquisaAlunosLocalTextBox_TextChanged(object sender, TextChangedEventArgs e) { if (placeholderPesquisaAlunosLocal != null && pesquisaAlunosLocalTextBox != null) placeholderPesquisaAlunosLocal.Visibility = string.IsNullOrEmpty(pesquisaAlunosLocalTextBox.Text) ? Visibility.Visible : Visibility.Collapsed; AtualizarTabelaDeAlunosUI(); }
+        private void ApagarTarefaButton_Click(object sender, RoutedEventArgs e) { try { if (sender is Button b && b.Tag is Tarefa t && MessageBox.Show($"Apagar '{t.Titulo}'?", "Conf.", MessageBoxButton.YesNo) == MessageBoxResult.Yes) { listaDeTarefasPrincipal.Remove(t); AtualizarTabelaDeTarefasUI(); AtualizarContadoresSumario(); } } catch (Exception ex) { HandleClickError("ApagarTarefaBtn", ex); } }
+        private void EditarGrupoButton_Click(object sender, RoutedEventArgs e) { try { if (sender is Button b && b.Tag is Grupo gOrig) { var alCpy = listaDeAlunosPrincipal.Select(a => new Aluno(a.NomeCompleto, a.NumeroAluno, a.Email, a.Grupo)).ToList(); var gEdCpy = new Grupo(gOrig.Id, gOrig.Nome); foreach (var alNum in gOrig.ListaDeAlunosNoGrupo.Select(a => a.NumeroAluno)) { var alAppCpy = alCpy.FirstOrDefault(ca => ca.NumeroAluno == alNum); if (alAppCpy != null) gEdCpy.AdicionarAluno(alAppCpy); } CriarGrupoWindow win = new CriarGrupoWindow(gEdCpy, alCpy) { Owner = this, Title = $"Editar: {gOrig.Nome}" }; if (win.ShowDialog() == true && win.GrupoCriadoEditado != null) { Grupo gJanela = win.GrupoCriadoEditado; var gReal = listaDeGruposPrincipal.FirstOrDefault(gr => gr.Id == gOrig.Id); if (gReal == null) return; string nomeAntigo = gReal.Nome; string nomeNovo = gJanela.Nome; if (!nomeAntigo.Equals(nomeNovo, StringComparison.OrdinalIgnoreCase) && listaDeGruposPrincipal.Any(gr => gr.Id != gReal.Id && gr.Nome.Equals(nomeNovo, StringComparison.OrdinalIgnoreCase))) { MessageBox.Show($"Nome '{nomeNovo}' já existe.", "Conflito"); nomeNovo = nomeAntigo; } gReal.Nome = nomeNovo; var numsAlNoGrupoEditado = gJanela.ListaDeAlunosNoGrupo.Select(a => a.NumeroAluno).ToHashSet(); var alsEstavamNoGrupoOrig = listaDeAlunosPrincipal.Where(a => a.Grupo != null && a.Grupo.Equals(nomeAntigo, StringComparison.OrdinalIgnoreCase)).ToList(); foreach (var numAl in numsAlNoGrupoEditado) { var alReal = listaDeAlunosPrincipal.FirstOrDefault(a => a.NumeroAluno == numAl); if (alReal != null) AssociarAlunoAGrupo(alReal, gReal.Nome, false); } foreach (var alEstava in alsEstavamNoGrupoOrig) { if (!numsAlNoGrupoEditado.Contains(alEstava.NumeroAluno) && (alEstava.Grupo == nomeAntigo || alEstava.Grupo == nomeNovo)) AssociarAlunoAGrupo(alEstava, "Sem Grupo Atribuído", false); } AtualizarTabelaDeGruposUI(); AtualizarTabelaDeAlunosUI(); } } } catch (Exception ex) { HandleClickError("EditarGrupoBtn", ex); } }
+
+        private void ApagarGrupoButton_Click(object sender, RoutedEventArgs e)
         {
-            if (sender is Button btn && btn.Tag is Aluno aluno)
+            try
             {
-                if (MessageBox.Show($"Tem a certeza que deseja apagar o aluno '{aluno.NomeCompleto}'?", "Confirmar", MessageBoxButton.YesNo, MessageBoxImage.Warning) == MessageBoxResult.Yes)
+                if (sender is Button b && b.Tag is Grupo g && MessageBox.Show($"Apagar grupo '{g.Nome}'? Alunos associados ficarão sem grupo.", "Confirmar Remoção", MessageBoxButton.YesNo, MessageBoxImage.Warning) == MessageBoxResult.Yes)
                 {
-                    listaDeAlunosPrincipal.Remove(aluno); AtualizarTabelaDeAlunosUI(); AtualizarContadoresSumario();
-                    MessageBox.Show($"Aluno '{aluno.NomeCompleto}' apagado.", "Apagado", MessageBoxButton.OK, MessageBoxImage.Information);
+                    foreach (var al in listaDeAlunosPrincipal.Where(a => a.Grupo == g.Nome))
+                    {
+                        AssociarAlunoAGrupo(al, "Sem Grupo Atribuído"); // Desassocia os alunos do grupo
+                    }
+                    listaDeGruposPrincipal.Remove(g);
+                    AtualizarTabelaDeGruposUI();
+                    AtualizarTabelaDeAlunosUI(); // Para refletir alunos que ficaram sem grupo
+                    AtualizarContadoresSumario(); // <-- CHAMAR AQUI
                 }
             }
+            catch (Exception ex) { HandleClickError("ApagarGrupoBtn", ex); }
         }
 
-        private void AtualizarTabelaDeAlunosUI()
-        {
-            if (actualAlunosTableGrid == null) return;
-            string termoPesquisaLocal = pesquisaAlunosLocalTextBox?.Text.Trim().ToLower() ?? "";
-            IEnumerable<Aluno> alunosParaExibir = listaDeAlunosPrincipal;
-            if (!string.IsNullOrEmpty(termoPesquisaLocal))
-            {
-                alunosParaExibir = listaDeAlunosPrincipal.Where(a =>
-                    (a.NomeCompleto?.ToLower().Contains(termoPesquisaLocal) ?? false) || (a.NumeroAluno?.ToLower().Contains(termoPesquisaLocal) ?? false) ||
-                    (a.Email?.ToLower().Contains(termoPesquisaLocal) ?? false) || (a.Grupo?.ToLower().Contains(termoPesquisaLocal) ?? false));
-            }
-
-            for (int i = actualAlunosTableGrid.Children.Count - 1; i >= 0; i--)
-                if (Grid.GetRow(actualAlunosTableGrid.Children[i]) > 0) actualAlunosTableGrid.Children.RemoveAt(i);
-            while (actualAlunosTableGrid.RowDefinitions.Count > 1) actualAlunosTableGrid.RowDefinitions.RemoveAt(1);
-            int rowIndex = 1;
-            if (!alunosParaExibir.Any())
-            {
-                if (actualAlunosTableGrid.RowDefinitions.Count <= 1) actualAlunosTableGrid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
-                TextBlock msgVazio = new TextBlock { Text = "Nenhum aluno para exibir.", Margin = new Thickness(10), FontStyle = FontStyles.Italic, HorizontalAlignment = HorizontalAlignment.Center };
-                Grid.SetRow(msgVazio, 1); Grid.SetColumnSpan(msgVazio, actualAlunosTableGrid.ColumnDefinitions.Count);
-                actualAlunosTableGrid.Children.Add(msgVazio);
-            }
-            else
-            {
-                foreach (var aluno in alunosParaExibir)
-                {
-                    if (actualAlunosTableGrid.RowDefinitions.Count <= rowIndex) actualAlunosTableGrid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
-                    actualAlunosTableGrid.Children.Add(CreateTableCellUI(aluno.NomeCompleto, rowIndex, 0, actualAlunosTableGrid));
-                    actualAlunosTableGrid.Children.Add(CreateTableCellUI(aluno.NumeroAluno, rowIndex, 1, actualAlunosTableGrid));
-                    actualAlunosTableGrid.Children.Add(CreateTableCellUI(aluno.Email, rowIndex, 2, actualAlunosTableGrid));
-                    actualAlunosTableGrid.Children.Add(CreateTableCellUI(aluno.Grupo ?? "N/A", rowIndex, 3, actualAlunosTableGrid));
-                    Button btnApagar = new Button { Content = "Apagar", Tag = aluno, Margin = new Thickness(5, 2, 5, 2), Padding = new Thickness(5, 2, 5, 2), Foreground = Brushes.Red };
-                    btnApagar.Click += ApagarAlunoButton_Click;
-                    Grid.SetRow(btnApagar, rowIndex); Grid.SetColumn(btnApagar, 4);
-                    actualAlunosTableGrid.Children.Add(btnApagar);
-                    rowIndex++;
-                }
-            }
-        }
-        private Border CreateTableCellUI(string text, int row, int column, Grid targetGrid)
-        {
-            Border cellBorder = new Border { BorderBrush = Brushes.Gainsboro, Padding = new Thickness(10.0) };
-            int totalColumns = targetGrid?.ColumnDefinitions.Count ?? 1;
-            cellBorder.BorderThickness = new Thickness(0.0, 0.0, (column < totalColumns - 1) ? 1.0 : 0.0, 1.0);
-            TextBlock content = new TextBlock { Text = text, VerticalAlignment = VerticalAlignment.Center, TextTrimming = TextTrimming.CharacterEllipsis, TextWrapping = TextWrapping.Wrap };
-            cellBorder.Child = content; Grid.SetRow(cellBorder, row); Grid.SetColumn(cellBorder, column);
-            return cellBorder;
-        }
+        private void AssociarAlunoAGrupo(Aluno aluno, string nomeDoNovoGrupo, bool criarGrupoSeNaoExistir = false) { Debug.WriteLine($"[MW] AssociarAlunoAGrupo: Aluno='{aluno.NomeCompleto}', NovoGrupo='{nomeDoNovoGrupo}', Criar={criarGrupoSeNaoExistir}"); Grupo? grupoAntigoDoAluno = listaDeGruposPrincipal.FirstOrDefault(g => g.ListaDeAlunosNoGrupo.Any(a => a.NumeroAluno == aluno.NumeroAluno)); if (grupoAntigoDoAluno != null && grupoAntigoDoAluno.Nome != nomeDoNovoGrupo) { grupoAntigoDoAluno.RemoverAluno(aluno); Debug.WriteLine($"[MW] Aluno removido do grupo antigo '{grupoAntigoDoAluno.Nome}'."); } if (string.IsNullOrWhiteSpace(nomeDoNovoGrupo) || nomeDoNovoGrupo == "Sem Grupo Atribuído") { aluno.Grupo = "Sem Grupo Atribuído"; Debug.WriteLine($"[MW] Aluno '{aluno.NomeCompleto}' definido como 'Sem Grupo Atribuído'."); return; } Grupo? grupoAlvo = listaDeGruposPrincipal.FirstOrDefault(g => g.Nome.Equals(nomeDoNovoGrupo, StringComparison.OrdinalIgnoreCase)); if (grupoAlvo == null) { if (criarGrupoSeNaoExistir) { grupoAlvo = new Grupo(nomeDoNovoGrupo); listaDeGruposPrincipal.Add(grupoAlvo); Debug.WriteLine($"[MW] Novo grupo '{nomeDoNovoGrupo}' criado."); /* AtualizarContadoresSumario(); // Chamado pelo método principal */ } else { Debug.WriteLine($"[MW] AVISO: Grupo '{nomeDoNovoGrupo}' não encontrado. Aluno '{aluno.NomeCompleto}' fica sem grupo."); aluno.Grupo = "Sem Grupo Atribuído"; return; } } if (grupoAlvo != null) { if (!grupoAlvo.ListaDeAlunosNoGrupo.Any(a => a.NumeroAluno == aluno.NumeroAluno)) grupoAlvo.AdicionarAluno(aluno); aluno.Grupo = grupoAlvo.Nome; Debug.WriteLine($"[MW] Aluno '{aluno.NomeCompleto}' no grupo '{grupoAlvo.Nome}'."); } Debug.WriteLine($"[MW] Fim AssociarAlunoAGrupo: Aluno='{aluno.NomeCompleto}', GrupoFinal='{aluno.Grupo}'"); }
+        private Border CreateTableCellUI(object content, bool isHeader = false, bool isControl = false) { var bdr = new Border { BorderBrush = Brushes.LightGray }; if (isHeader) { bdr.BorderThickness = new Thickness(1); bdr.Padding = new Thickness(5); bdr.Background = Brushes.AliceBlue; } else { bdr.BorderThickness = new Thickness(0, 0, 1, 1); bdr.Padding = new Thickness(5); } if (isControl && content is UIElement ctl) { bdr.Child = ctl; } else { bdr.Child = new TextBlock { Text = content?.ToString() ?? "", TextWrapping = TextWrapping.Wrap, VerticalAlignment = VerticalAlignment.Center, TextAlignment = TextAlignment.Left, FontWeight = isHeader ? FontWeights.Bold : FontWeights.Normal }; } return bdr; }
+        private void HandleClickError(string methodName, Exception ex) { MessageBox.Show($"Erro em '{methodName}': {ex.Message}\n{ex.StackTrace}", "Erro", MessageBoxButton.OK, MessageBoxImage.Error); Debug.WriteLine($"[MW] CRITICAL ERROR {methodName}: {ex}"); }
     }
 }

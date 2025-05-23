@@ -1,6 +1,8 @@
-﻿using System;
+﻿// Ficheiro: AdicionarAluno.xaml.cs
+using System;
+using System.Text.RegularExpressions;
 using System.Windows;
-using System.Text.RegularExpressions; // Necessário para Regex
+using FinalLab.Models;
 
 namespace FinalLab
 {
@@ -12,61 +14,57 @@ namespace FinalLab
         public AdicionarAluno()
         {
             InitializeComponent();
+            // Tradução do título da janela
+            this.Title = "Adicionar Novo Aluno";
         }
 
         private void GuardarButton_Click(object sender, RoutedEventArgs e)
         {
-            string nomeCompleto = NomeCompletoTextBox.Text.Trim();
-            string numeroAluno = NumeroAlunoTextBox.Text.Trim();
-            // string turma = TurmaTextBox.Text.Trim(); // Removido conforme a sua última instrução
-            string email = EmailTextBox.Text.Trim(); // Obtém o email e remove espaços no início/fim
-
-            // Validações de campos obrigatórios
-            if (string.IsNullOrWhiteSpace(nomeCompleto) ||
-                string.IsNullOrWhiteSpace(numeroAluno) ||
-                string.IsNullOrWhiteSpace(email)) // Turma removida da validação de obrigatório
-            {
-                MessageBox.Show("Os campos Nome, Número e Email são obrigatórios.", "Erro de Validação", MessageBoxButton.OK, MessageBoxImage.Error);
-                return;
-            }
-
-            //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-            // SECÇÃO DE VALIDAÇÃO DO EMAIL
-            //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-            // A expressão regular para validar formatos de email comuns.
-            // Aceita: local-part@domain.top-level-domain
-            // Rejeita: espaços, múltiplos @, falta de partes essenciais.
-            string emailPattern = @"^[^@\s]+@[^@\s]+\.[^@\s]+$";
-
-            if (!Regex.IsMatch(email, emailPattern))
-            {
-                MessageBox.Show("Formato de email inválido. Por favor, insira um email como 'nome@dominio.com'.", "Erro de Validação", MessageBoxButton.OK, MessageBoxImage.Error);
-                return; // Interrompe a execução se o email for inválido
-            }
-            //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-            // FIM DA SECÇÃO DE VALIDAÇÃO DO EMAIL
-            //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-
             try
             {
-                // O grupo é passado como null, o construtor de Aluno define "Sem Grupo" por defeito
-                NovoAluno = new Aluno(nomeCompleto, numeroAluno, email, null);
+                string nomeCompleto = NomeCompletoTextBox.Text.Trim();
+                string numeroAluno = NumeroAlunoTextBox.Text.Trim();
+                string email = EmailTextBox.Text.Trim();
+                string? grupo = GrupoTextBox.Text.Trim();
+
+                if (string.IsNullOrWhiteSpace(nomeCompleto))
+                {
+                    MessageBox.Show("O campo 'Nome Completo' é de preenchimento obrigatório.", "Validação", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    NomeCompletoTextBox.Focus(); return;
+                }
+                if (string.IsNullOrWhiteSpace(numeroAluno))
+                {
+                    MessageBox.Show("O campo 'N.º Aluno' é de preenchimento obrigatório.", "Validação", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    NumeroAlunoTextBox.Focus(); return;
+                }
+                if (string.IsNullOrWhiteSpace(email))
+                {
+                    MessageBox.Show("O campo 'Email' é de preenchimento obrigatório.", "Validação", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    EmailTextBox.Focus(); return;
+                }
+
+                // Validação de Email UTAD - assumindo 5 dígitos para 'alxxxxx'
+                if (!Regex.IsMatch(email, @"^al\d{5}@alunos\.utad\.pt$", RegexOptions.IgnoreCase))
+                {
+                    MessageBox.Show("O formato do email é inválido. Deve ser 'alxxxxx@alunos.utad.pt', onde x é um dígito.", "Validação", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    EmailTextBox.Focus(); return;
+                }
+
+                NovoAluno = new Aluno(nomeCompleto, numeroAluno, email, string.IsNullOrWhiteSpace(grupo) ? null : grupo);
                 AlunoAdicionadoComSucesso = true;
                 MessageBox.Show("Aluno adicionado com sucesso!", "Sucesso", MessageBoxButton.OK, MessageBoxImage.Information);
-                this.DialogResult = true;
-                this.Close();
+                DialogResult = true; this.Close();
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Ocorreu um erro ao adicionar o aluno: {ex.Message}", "Erro", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBox.Show($"Ocorreu um erro ao adicionar o aluno: {ex.Message}", "Erro Inesperado", MessageBoxButton.OK, MessageBoxImage.Error);
                 AlunoAdicionadoComSucesso = false;
             }
         }
 
         private void CancelarButton_Click(object sender, RoutedEventArgs e)
         {
-            this.DialogResult = false;
-            this.Close();
+            DialogResult = false; this.Close();
         }
     }
 }
