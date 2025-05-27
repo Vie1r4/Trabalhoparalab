@@ -3,7 +3,6 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        xmlns:local="clr-namespace:FinalLab"
         mc:Ignorable="d"
         Title="Criar Nova Tarefa" Height="500" Width="450"
         WindowStartupLocation="CenterOwner"
@@ -13,11 +12,10 @@
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
-            <RowDefinition Height="Auto"/>
-            <RowDefinition Height="Auto"/>
-            <RowDefinition Height="Auto"/>
-            <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
         <Grid.ColumnDefinitions>
@@ -25,33 +23,24 @@
             <ColumnDefinition Width="*"/>
         </Grid.ColumnDefinitions>
 
-        <TextBlock Grid.Row="0" Grid.Column="0" Text="Título da Tarefa:" VerticalAlignment="Center" Margin="0,0,10,0"/>
-        <TextBox x:Name="TituloTextBox" Grid.Row="0" Grid.Column="1" Margin="0,5" Padding="5"/>
+        <TextBlock Grid.Row="0" Grid.Column="0" Text="Título da Tarefa:" VerticalAlignment="Center" Margin="0,0,10,10" FontWeight="SemiBold"/>
+        <TextBox x:Name="TituloTextBox" Grid.Row="0" Grid.Column="1" Margin="0,0,0,10" Padding="5" Height="28" VerticalContentAlignment="Center"/>
 
-        <TextBlock Grid.Row="1" Grid.Column="0" Text="Descrição (Opcional):" VerticalAlignment="Top" Margin="0,5,10,0"/>
-        <TextBox x:Name="DescricaoTextBox" Grid.Row="1" Grid.Column="1" Margin="0,5" Padding="5" TextWrapping="Wrap" AcceptsReturn="True" MinHeight="60" MaxHeight="100" VerticalScrollBarVisibility="Auto"/>
+        <TextBlock Grid.Row="1" Grid.Column="0" Text="Descrição (Opcional):" VerticalAlignment="Top" Margin="0,5,10,10" FontWeight="SemiBold"/>
+        <TextBox x:Name="DescricaoTextBox" Grid.Row="1" Grid.Column="1" Margin="0,5,0,10" Padding="5" TextWrapping="Wrap" AcceptsReturn="True" MinHeight="80" MaxHeight="120" VerticalScrollBarVisibility="Auto"/>
 
-        <TextBlock Grid.Row="2" Grid.Column="0" Text="Data de Início:" VerticalAlignment="Center" Margin="0,5,10,0"/>
-        <DatePicker x:Name="DataInicioPicker" Grid.Row="2" Grid.Column="1" Margin="0,5" Padding="5" VerticalAlignment="Center"/>
-        <!-- Para adicionar hora, pode adicionar TextBox para Hora e Minuto ao lado ou usar um controlo de DataHora mais completo -->
+        <TextBlock Grid.Row="2" Grid.Column="0" Text="Data de Início:" VerticalAlignment="Center" Margin="0,5,10,10" FontWeight="SemiBold"/>
+        <DatePicker x:Name="DataInicioPicker" Grid.Row="2" Grid.Column="1" Margin="0,5,0,10" Padding="5" VerticalAlignment="Center" Height="28"/>
 
-        <TextBlock Grid.Row="3" Grid.Column="0" Text="Data de Término:" VerticalAlignment="Center" Margin="0,5,10,0"/>
-        <DatePicker x:Name="DataTerminoPicker" Grid.Row="3" Grid.Column="1" Margin="0,5" Padding="5" VerticalAlignment="Center"/>
-        <!-- Para adicionar hora, pode adicionar TextBox para Hora e Minuto ao lado -->
+        <TextBlock Grid.Row="3" Grid.Column="0" Text="Data de Término:" VerticalAlignment="Center" Margin="0,5,10,10" FontWeight="SemiBold"/>
+        <DatePicker x:Name="DataTerminoPicker" Grid.Row="3" Grid.Column="1" Margin="0,5,0,10" Padding="5" VerticalAlignment="Center" Height="28"/>
 
-        <TextBlock Grid.Row="4" Grid.Column="0" Text="Peso (%):" VerticalAlignment="Center" Margin="0,5,10,0"/>
-        <TextBox x:Name="PesoTextBox" Grid.Row="4" Grid.Column="1" Margin="0,5" Padding="5" PreviewTextInput="PesoTextBox_PreviewTextInput"/>
-        <!-- Adicionado PreviewTextInput para aceitar apenas números -->
-
-        <!-- Se quiser manter a opção "Notificar", descomente isto -->
-        <!--
-        <TextBlock Grid.Row="5" Grid.Column="0" Text="Notificar:" VerticalAlignment="Center" Margin="0,5,10,0"/>
-        <CheckBox x:Name="NotificarCheckBox" Grid.Row="5" Grid.Column="1" Margin="0,5" VerticalAlignment="Center"/>
-        -->
+        <TextBlock Grid.Row="4" Grid.Column="0" Text="Peso (%):" VerticalAlignment="Center" Margin="0,5,10,10" FontWeight="SemiBold"/>
+        <TextBox x:Name="PesoTextBox" Grid.Row="4" Grid.Column="1" Margin="0,5,0,10" Padding="5" PreviewTextInput="PesoTextBox_PreviewTextInput" Height="28" VerticalContentAlignment="Center"/>
 
         <StackPanel Grid.Row="6" Grid.Column="0" Grid.ColumnSpan="2" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,20,0,0">
-            <Button x:Name="GuardarButton" Content="Guardar" Width="100" Margin="0,0,10,0" Click="GuardarButton_Click" Background="#FF0078D4" Foreground="White" Padding="10,5" BorderThickness="0"/>
-            <Button x:Name="CancelarButton" Content="Cancelar" Width="100" Click="CancelarButton_Click" Background="#FFCCCCCC" Foreground="Black" Padding="10,5" BorderThickness="0"/>
+            <Button x:Name="GuardarButton" Content="Guardar" Width="100" Margin="0,0,10,0" Click="GuardarButton_Click" Style="{StaticResource ActionButtonStyle}"/>
+            <Button x:Name="CancelarButton" Content="Cancelar" Width="100" Click="CancelarButton_Click" IsCancel="True"/>
         </StackPanel>
     </Grid>
 </Window>

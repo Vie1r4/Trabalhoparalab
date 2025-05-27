@@ -1,55 +1,73 @@
-﻿// Ficheiro: Models/Grupo.cs
+﻿// FinalLab/Models/Grupo.cs
 using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
+using System.ComponentModel;
 using System.Linq;
-using System.Diagnostics;
 
 namespace FinalLab.Models
 {
-    public class Grupo
+    public class Grupo : INotifyPropertyChanged
     {
-        public Guid Id { get; private set; }
-        public string Nome { get; set; }
-        public List<Aluno> ListaDeAlunosNoGrupo { get; private set; }
+        private static int _nextIdCounter = 1;
+        public string Id { get; private set; } // String ID
 
-        // Construtor principal para novos grupos ou quando o ID não é predefinido
+        private string _nome = default!;
+        public string Nome
+        {
+            get => _nome;
+            set
+            { /* ... (setter com validação e OnPropertyChanged) ... */
+                if (string.IsNullOrWhiteSpace(value)) throw new ArgumentException("Nome do grupo não pode ser vazio.", nameof(Nome));
+                if (_nome != value) { _nome = value; OnPropertyChanged(nameof(Nome)); }
+            }
+        }
+
+        private ObservableCollection<Aluno> _alunosDoGrupo = new ObservableCollection<Aluno>();
+        public ObservableCollection<Aluno> AlunosDoGrupo
+        {
+            get => _alunosDoGrupo;
+            set { if (_alunosDoGrupo != value) { _alunosDoGrupo = value; OnPropertyChanged(nameof(AlunosDoGrupo)); } }
+        }
+
+        // Construtor principal para novos grupos (gera ID numérico como string)
         public Grupo(string nome)
         {
-            if (string.IsNullOrWhiteSpace(nome) && nome != "") // Permite nome vazio inicialmente para edição no TextBox
+            if (string.IsNullOrWhiteSpace(nome)) throw new ArgumentException("Nome do grupo não pode ser vazio.", nameof(nome));
+
+            // Se o nome for "Todos os Grupos", usa o ID especial definido em Pauta.
+            // Caso contrário, gera um novo ID.
+            if (nome.Equals(Pauta.TODOS_GRUPOS_NOME_DISPLAY, StringComparison.OrdinalIgnoreCase))
             {
-                // Não lança exceção aqui se o nome for "" para permitir que o TextBox seja preenchido.
-                // A validação do nome não vazio deve ser feita antes de guardar.
-                // No entanto, um nome verdadeiramente nulo ou apenas com espaços ainda é problemático.
-                // Para ser mais robusto, o nome só deve ser validado quando se tenta *usar* o grupo.
+                Id = Pauta.TODOS_GRUPOS_ID;
             }
-            Id = Guid.NewGuid();
+            else
+            {
+                Id = (_nextIdCounter++).ToString();
+            }
             Nome = nome;
-            ListaDeAlunosNoGrupo = new List<Aluno>();
-            Debug.WriteLine($"[Grupo.cs] Novo Grupo criado (construtor 1): Nome='{Nome}', ID={Id}");
         }
 
-        // Construtor para criar um Grupo com um ID específico (usado na lógica de edição para manter o ID)
-        public Grupo(Guid id, string nome) : this(nome) // Chama o construtor principal para definir Nome e Lista
+        // Construtor para casos onde o ID já é conhecido (ex: placeholder "Todos os Grupos" com ID fixo)
+        // Ou para recriar objetos se necessário (embora sem persistência, menos comum)
+        internal Grupo(string id, string nome, ObservableCollection<Aluno>? alunos = null)
         {
-            this.Id = id; // Sobrescreve o ID gerado com o ID fornecido
-            Debug.WriteLine($"[Grupo.cs] Grupo criado/copiado (construtor 2): Nome='{Nome}', ID={Id}");
-        }
-
-        public void AdicionarAluno(Aluno aluno)
-        {
-            if (aluno != null && !ListaDeAlunosNoGrupo.Any(a => a.NumeroAluno == aluno.NumeroAluno))
-            { ListaDeAlunosNoGrupo.Add(aluno); Debug.WriteLine($"[Grupo.cs] Aluno '{aluno.NomeCompleto}' adicionado ao grupo '{this.Nome}'."); }
-        }
-
-        public void RemoverAluno(Aluno aluno)
-        {
-            if (aluno != null)
+            Id = id;
+            Nome = nome;
+            AlunosDoGrupo = alunos ?? new ObservableCollection<Aluno>();
+            // Não incrementa _nextIdCounter se o ID for de um placeholder conhecido
+            // ou se estivermos a recriar um grupo com ID já existente.
+            if (int.TryParse(id, out int numericId) && numericId >= _nextIdCounter)
             {
-                var alunoParaRemover = ListaDeAlunosNoGrupo.FirstOrDefault(a => a.NumeroAluno == aluno.NumeroAluno);
-                if (alunoParaRemover != null) { ListaDeAlunosNoGrupo.Remove(alunoParaRemover); Debug.WriteLine($"[Grupo.cs] Aluno '{aluno.NomeCompleto}' removido do grupo '{this.Nome}'."); }
+                _nextIdCounter = numericId + 1;
             }
         }
-        public void LimparAlunos() { ListaDeAlunosNoGrupo.Clear(); Debug.WriteLine($"[Grupo.cs] Lista de alunos do grupo '{this.Nome}' limpa."); }
-        public override string ToString() { return Nome; }
+
+        public void AdicionarAluno(Aluno aluno) { /* ... (código como antes) ... */ ArgumentNullException.ThrowIfNull(aluno); if (!_alunosDoGrupo.Any(a => a.NumeroAluno == aluno.NumeroAluno)) { _alunosDoGrupo.Add(aluno); OnPropertyChanged(nameof(AlunosDoGrupo)); } }
+        public void RemoverAluno(Aluno aluno) { /* ... (código como antes) ... */ ArgumentNullException.ThrowIfNull(aluno); var al = _alunosDoGrupo.FirstOrDefault(a => a.NumeroAluno == aluno.NumeroAluno); if (al != null) { _alunosDoGrupo.Remove(al); OnPropertyChanged(nameof(AlunosDoGrupo)); } }
+        public void LimparAlunos() { if (_alunosDoGrupo.Any()) { _alunosDoGrupo.Clear(); OnPropertyChanged(nameof(AlunosDoGrupo)); } }
+
+        public event PropertyChangedEventHandler? PropertyChanged;
+        protected virtual void OnPropertyChanged(string propertyName) { PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName)); }
     }
 }

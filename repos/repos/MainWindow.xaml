@@ -13,14 +13,10 @@
             <ColumnDefinition Width="*"/>
         </Grid.ColumnDefinitions>
 
-        <!-- Coluna do Menu Lateral Esquerdo -->
         <Border Grid.Column="0" Background="#FF2D3748" Padding="10">
             <StackPanel>
-                <!-- Título da Aplicação -->
                 <TextBlock Text="GESTOR ACADÉMICO" Foreground="White" FontSize="20" FontWeight="Bold" 
                            HorizontalAlignment="Center" Margin="0,15,0,30" TextAlignment="Center"/>
-
-                <!-- Painel do Utilizador -->
                 <Border Background="#FF4A586A" CornerRadius="5" Padding="10" Margin="5,0,5,20">
                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
                         <Ellipse Width="45" Height="45" Margin="0,0,12,0" Stroke="White" StrokeThickness="1">
@@ -32,8 +28,6 @@
                                    VerticalAlignment="Center" FontSize="14" FontWeight="Medium"/>
                     </StackPanel>
                 </Border>
-
-                <!-- Botões de Navegação Principal -->
                 <Button Content="O Meu Perfil" Click="MainMenuPerfilButton_Click" Style="{StaticResource MenuButtonStyle}"/>
                 <Separator Margin="5,10,5,15" Background="#FF4A586A"/>
                 <TextBlock Text="GESTÃO" Foreground="#FFA0AEC0" Margin="5,0,0,8" FontSize="12" FontWeight="Bold"/>
@@ -41,8 +35,6 @@
                 <Button Content="Tarefas" Click="TarefasButton_Click" Style="{StaticResource MenuButtonStyle}"/>
                 <Button Content="Grupos" Click="GruposButton_Click" Style="{StaticResource MenuButtonStyle}"/>
                 <Button Content="Pauta" Click="PautaButton_Click" Style="{StaticResource MenuButtonStyle}"/>
-
-                <!-- Painel de Resumo -->
                 <Border Background="#FF4A586A" CornerRadius="5" Padding="15" Margin="5,40,5,0">
                     <StackPanel>
                         <TextBlock Text="RESUMO" Foreground="White" FontWeight="Bold" HorizontalAlignment="Center" Margin="0,0,0,10" FontSize="14"/>
@@ -54,7 +46,6 @@
                             <TextBlock Text="Total de Tarefas: " Foreground="#FFCBD5E0"/>
                             <TextBlock x:Name="TotalTarefasTextBlock" Text="0" Foreground="White" FontWeight="SemiBold"/>
                         </StackPanel>
-                        <!-- NOVO CONTADOR DE GRUPOS -->
                         <StackPanel Orientation="Horizontal" Margin="0,0,0,5">
                             <TextBlock Text="Total de Grupos: " Foreground="#FFCBD5E0"/>
                             <TextBlock x:Name="TotalGruposTextBlock" Text="0" Foreground="White" FontWeight="SemiBold"/>
@@ -63,14 +54,11 @@
                 </Border>
             </StackPanel>
         </Border>
-
-        <!-- Área de Conteúdo Principal -->
         <Grid Grid.Column="1" Background="#FFF7FAFC">
             <Grid.RowDefinitions>
                 <RowDefinition Height="65"/>
                 <RowDefinition Height="*"/>
             </Grid.RowDefinitions>
-
             <Border Grid.Row="0" Background="White" BorderBrush="#FFEDF2F7" BorderThickness="0,0,0,1">
                 <Grid Margin="25,0">
                     <TextBlock x:Name="PageTitleTextBlock" Text="Página Inicial" FontSize="22" FontWeight="SemiBold" VerticalAlignment="Center" Foreground="#FF2D3748"/>
@@ -81,7 +69,6 @@
                     </StackPanel>
                 </Grid>
             </Border>
-
             <Border Grid.Row="1" Margin="25" Background="White" CornerRadius="8" Padding="20">
                 <Border.Effect>
                     <DropShadowEffect ShadowDepth="2" BlurRadius="8" Color="#FFBBBBBB" Opacity="0.25"/>

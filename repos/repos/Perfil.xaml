@@ -4,7 +4,7 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
              mc:Ignorable="d" 
-             d:DesignHeight="450" d:DesignWidth="800">
+             d:DesignHeight="550" d:DesignWidth="800" Loaded="Perfil_Loaded">
     <Grid Margin="20">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
@@ -26,24 +26,21 @@
         <Ellipse Grid.Row="1" Width="150" Height="150" Stroke="DarkGray" StrokeThickness="1" 
                  HorizontalAlignment="Center" Margin="0,0,0,20">
             <Ellipse.Fill>
-                <!-- x:Name é crucial aqui -->
                 <ImageBrush x:Name="ProfileImageBrush" Stretch="UniformToFill"/>
             </Ellipse.Fill>
         </Ellipse>
 
-        <StackPanel Grid.Row="2" Orientation="Horizontal" Margin="0,0,0,10" HorizontalAlignment="Center">
+        <StackPanel Grid.Row="2" Orientation="Horizontal" Margin="0,0,0,10" HorizontalAlignment="Left">
             <TextBlock Text="Nome de Utilizador: " FontWeight="SemiBold" FontSize="16" VerticalAlignment="Center"/>
-            <!-- x:Name é crucial aqui -->
             <TextBlock x:Name="NomeUtilizadorTextBlock" Text="" FontSize="16" VerticalAlignment="Center"/>
         </StackPanel>
 
-        <StackPanel Grid.Row="3" Orientation="Horizontal" Margin="0,0,0,30" HorizontalAlignment="Center">
+        <StackPanel Grid.Row="3" Orientation="Horizontal" Margin="0,0,0,30" HorizontalAlignment="Left">
             <TextBlock Text="Endereço de Email: " FontWeight="SemiBold" FontSize="16" VerticalAlignment="Center"/>
-            <!-- x:Name é crucial aqui -->
             <TextBlock x:Name="EmailUtilizadorTextBlock" Text="" FontSize="16" VerticalAlignment="Center"/>
         </StackPanel>
 
-        <Button Grid.Row="5" Content="Editar o Meu Perfil" Width="180" HorizontalAlignment="Center" 
-                Click="EditProfileButton_Click" Style="{DynamicResource ActionButtonStyle}"/>
+        <Button Grid.Row="5" Content="Editar o Meu Perfil" Width="180" HorizontalAlignment="Right" 
+                Click="EditProfileButton_Click" Style="{StaticResource ActionButtonStyle}"/>
     </Grid>
 </UserControl>

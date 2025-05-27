@@ -1,0 +1,85 @@
+﻿<!-- FinalLab/Pauta.xaml -->
+<UserControl x:Class="FinalLab.Pauta"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:local="clr-namespace:FinalLab"
+             mc:Ignorable="d" 
+             d:DesignHeight="600" d:DesignWidth="900" 
+             Loaded="Pauta_Loaded">
+    <UserControl.Resources>
+        <Style x:Key="CentralizedDataGridCellStyle" TargetType="DataGridCell">
+            <Setter Property="TextBlock.TextAlignment" Value="Center" />
+            <Setter Property="VerticalAlignment" Value="Center"/>
+            <Setter Property="Padding" Value="4"/>
+        </Style>
+        <!-- <local:CountToBoolConverter x:Key="CountToBoolConverter"/> -->
+    </UserControl.Resources>
+    <Grid Margin="15">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <!-- Linha 0: Filtros Principais -->
+        <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,10">
+            <TextBlock Text="Filtrar por grupo:" VerticalAlignment="Center" Margin="0,0,5,0" FontWeight="SemiBold"/>
+            <ComboBox x:Name="GrupoFilterComboBox" Width="180" DisplayMemberPath="Nome" 
+                      ItemsSource="{Binding GruposDisponiveisParaFiltro}"
+                      SelectedItem="{Binding SelectedGrupo, Mode=TwoWay}"
+                      SelectionChanged="GrupoFilterComboBox_SelectionChanged" 
+                      VerticalContentAlignment="Center" Height="28" Margin="0,0,20,0"/>
+
+            <TextBlock Text="Visualizar tarefa:" VerticalAlignment="Center" Margin="0,0,5,0" FontWeight="SemiBold"/>
+            <ComboBox x:Name="TarefaVisualizarComboBox" Width="200" DisplayMemberPath="Titulo" 
+                      ItemsSource="{Binding TarefasDisponiveisParaFiltro}"
+                      SelectedItem="{Binding SelectedTarefa, Mode=TwoWay}"
+                      SelectionChanged="TarefaVisualizarComboBox_SelectionChanged" 
+                      VerticalContentAlignment="Center" Height="28" Margin="0,0,20,0"/>
+
+            <Button x:Name="AtribuirNotasButton" Content="Atribuir Nota à Seleção" 
+                    Click="AtribuirNotasButton_Click" 
+                    Style="{StaticResource ActionButtonStyle}" Margin="0,0,5,0"/>
+            <TextBox x:Name="NotaParaAtribuirTextBox" Width="50" VerticalAlignment="Center" Margin="0,0,10,0" Height="28" 
+                     VerticalContentAlignment="Center" PreviewTextInput="NotaTextBox_PreviewTextInput" ToolTip="Nota (0-20)"/>
+        </StackPanel>
+
+        <!-- Linha 1: Filtro de Pesquisa de Aluno -->
+        <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="0,5,0,10">
+            <TextBlock Text="Pesquisar Aluno (Nome/Nº):" VerticalAlignment="Center" Margin="0,0,5,0" FontWeight="SemiBold"/>
+            <TextBox x:Name="AlunoSearchTextBox" Width="250" 
+                     Text="{Binding TextoPesquisaAluno, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                     TextChanged="AlunoSearchTextBox_TextChanged" 
+                     VerticalContentAlignment="Center" Height="28"/>
+        </StackPanel>
+
+        <!-- Linha 2: DataGrid -->
+        <ScrollViewer Grid.Row="2" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto">
+            <DataGrid x:Name="DataGridPauta" 
+                      ItemsSource="{Binding PautaItems}"
+                      AutoGenerateColumns="False" 
+                      CanUserAddRows="False" CanUserSortColumns="True"
+                      AlternatingRowBackground="AliceBlue" RowHeaderWidth="0" IsReadOnly="False" 
+                      BeginningEdit="PautaDataGrid_BeginningEdit" 
+                      CellEditEnding="PautaDataGrid_CellEditEnding"
+                      SelectionMode="Extended">
+            </DataGrid>
+        </ScrollViewer>
+
+        <!-- Linha 3: Botões de Ação Inferiores -->
+        <StackPanel Grid.Row="3" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,15,0,0">
+            <Button x:Name="SalvarAlteracoesButton" Content="Salvar Alterações" 
+                    Click="SalvarAlteracoesButton_Click" 
+                    Style="{StaticResource ActionButtonStyle}" Margin="0,0,10,0"/>
+            <Button x:Name="HistogramaButton" Content="Ver Histograma" 
+                    Click="HistogramaButton_Click" 
+                    Style="{StaticResource ActionButtonStyle}" Margin="0,0,10,0"/>
+            <Button x:Name="CalcularNotasFinaisButton" Content="Recalcular Notas" 
+                    Click="CalcularNotasFinaisButton_Click" 
+                    Style="{StaticResource ActionButtonStyle}"/>
+        </StackPanel>
+    </Grid>
+</UserControl>

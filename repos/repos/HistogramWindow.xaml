@@ -1,0 +1,53 @@
+﻿<Window x:Class="FinalLab.HistogramWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d"
+        Title="Histograma de Notas" Height="600" Width="800"
+        WindowStartupLocation="CenterScreen">
+    <Grid Margin="15">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <!-- Título e descrição -->
+        <TextBlock Grid.Row="0" Text="Histograma de Distribuição de Notas" 
+                   FontSize="20" FontWeight="Bold" Margin="0,0,0,15"/>
+
+        <!-- Filtros e Controles -->
+        <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="0,0,0,15">
+            <TextBlock Text="Filtrar por grupo:" VerticalAlignment="Center" Margin="0,0,5,0" FontWeight="SemiBold"/>
+            <ComboBox x:Name="GrupoFilterComboBox" Width="180" DisplayMemberPath="Nome" 
+                      SelectionChanged="GrupoFilterComboBox_SelectionChanged" 
+                      VerticalContentAlignment="Center" Height="28" Margin="0,0,20,0"/>
+
+            <TextBlock Text="Tarefa:" VerticalAlignment="Center" Margin="0,0,5,0" FontWeight="SemiBold"/>
+            <ComboBox x:Name="TarefaFilterComboBox" Width="200" DisplayMemberPath="Titulo" 
+                      SelectionChanged="TarefaFilterComboBox_SelectionChanged" 
+                      VerticalContentAlignment="Center" Height="28" Margin="0,0,20,0"/>
+
+            <Button x:Name="AtualizarButton" Content="Atualizar" Click="AtualizarButton_Click" 
+                    Style="{StaticResource ActionButtonStyle}" Margin="0,0,10,0"/>
+        </StackPanel>
+
+        <!-- Área do Gráfico -->
+        <Grid Grid.Row="2" Background="White">
+            <Border BorderBrush="LightGray" BorderThickness="1">
+                <Canvas x:Name="HistogramCanvas" Background="White" SizeChanged="HistogramCanvas_SizeChanged"/>
+            </Border>
+        </Grid>
+
+        <!-- Botões de Ação -->
+        <StackPanel Grid.Row="3" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,15,0,0">
+            <Button x:Name="ExportarButton" Content="Exportar" Click="ExportarButton_Click" 
+                    Style="{StaticResource ActionButtonStyle}" Margin="0,0,10,0"/>
+            <!-- ImprimirButton foi removido daqui -->
+            <Button x:Name="FecharButton" Content="Fechar" Click="FecharButton_Click" 
+                    Style="{StaticResource ActionButtonStyle}"/>
+        </StackPanel>
+    </Grid>
+</Window>

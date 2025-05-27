@@ -1,9 +1,7 @@
 ﻿// Ficheiro: Models/Aluno.cs
-using System; // Para ArgumentException
-// using System.ComponentModel; // Descomente se e quando usar INotifyPropertyChanged
-// using System.Runtime.CompilerServices; // Descomente se e quando usar INotifyPropertyChanged
+using System;
 
-namespace FinalLab.Models
+namespace FinalLab.Models // Certifica-te que o namespace está correto
 {
     public class Aluno
     {
@@ -11,7 +9,8 @@ namespace FinalLab.Models
         public string NomeCompleto
         {
             get => _nomeCompleto;
-            set { _nomeCompleto = value; /* OnPropertyChanged(); */ }
+            // O setter pode ser simplificado se não houver lógica adicional como INotifyPropertyChanged
+            set { _nomeCompleto = value; }
         }
 
         private string _numeroAluno; // Campo de apoio para NumeroAluno
@@ -23,7 +22,7 @@ namespace FinalLab.Models
                 if (string.IsNullOrWhiteSpace(value))
                     throw new ArgumentException("O número do aluno não pode ser vazio.", nameof(NumeroAluno));
                 _numeroAluno = value;
-                /* OnPropertyChanged(); */
+                // Se INotifyPropertyChanged for adicionado, chamar OnPropertyChanged() aqui.
             }
         }
 
@@ -31,42 +30,41 @@ namespace FinalLab.Models
         public string Email
         {
             get => _email;
-            set { _email = value; /* OnPropertyChanged(); */ }
+            set { _email = value; }
         }
 
-        private string _grupo; // Campo de apoio para Grupo
+        private string _grupo;
         public string Grupo
         {
             get => _grupo;
-            set { _grupo = value ?? "Sem Grupo Atribuído"; /* OnPropertyChanged(); */ }
+            set { _grupo = value ?? "Sem Grupo Atribuído"; }
         }
 
         public string NomeCompletoNumero => $"{NomeCompleto} ({NumeroAluno})";
 
         // Construtor principal
-        public Aluno(string nomeCompleto, string numeroAluno, string email, string? grupoParam = null)
+        public Aluno(string nomeCompleto, string numeroAlunoParam, string email, string? grupoParam = null)
         {
-            // Validações de entrada
+            // Validações de entrada para os parâmetros
             if (string.IsNullOrWhiteSpace(nomeCompleto))
                 throw new ArgumentException("Nome completo é obrigatório.", nameof(nomeCompleto));
-            // A validação de numeroAluno será feita pelo setter da propriedade NumeroAluno
+
+            // Validar o parâmetro numeroAlunoParam ANTES de tentar atribuí-lo ao campo.
+            // Isto garante que se numeroAlunoParam for inválido, a exceção é lançada antes da atribuição,
+            // e se for válido, _numeroAluno será definitivamente inicializado.
+            if (string.IsNullOrWhiteSpace(numeroAlunoParam))
+                throw new ArgumentException("O número do aluno não pode ser vazio.", nameof(numeroAlunoParam));
+
             if (string.IsNullOrWhiteSpace(email))
                 throw new ArgumentException("Email é obrigatório.", nameof(email));
 
-            // Inicializa os campos de apoio diretamente ou através de propriedades (que inicializam os campos)
+            // Inicializa os campos de apoio diretamente.
             _nomeCompleto = nomeCompleto;
-            NumeroAluno = numeroAluno; // Usa o setter para que a validação e inicialização de _numeroAluno ocorra
+            _numeroAluno = numeroAlunoParam; // Atribuição direta do parâmetro validado ao campo.
             _email = email;
-            _grupo = grupoParam ?? "Sem Grupo Atribuído"; // Garante que _grupo nunca é null
+            _grupo = grupoParam ?? "Sem Grupo Atribuído";
         }
 
-        // Se INotifyPropertyChanged for necessário no futuro:
-        /* 
-        public event PropertyChangedEventHandler? PropertyChanged;
-        protected virtual void OnPropertyChanged([CallerMemberName] string? propertyName = null)
-        {
-            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
-        }
-        */
+
     }
 }
