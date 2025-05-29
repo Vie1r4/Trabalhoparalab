@@ -21,10 +21,10 @@ namespace FinalLab
 {
     public partial class MainWindow : Window, INotifyPropertyChanged
     {
-        public List<Aluno> listaDeAlunosPrincipal { get; private set; } = new List<Aluno>();
-        public List<Tarefa> listaDeTarefasPrincipal { get; private set; } = new List<Tarefa>();
-        public List<Grupo> listaDeGruposPrincipal { get; private set; } = new List<Grupo>();
-        public List<NotaAlunoTarefa> listaDeNotasPrincipal { get; private set; } = new List<NotaAlunoTarefa>();
+        public List<Aluno> listaDeAlunosPrincipal { get; private set; }
+        public List<Grupo> listaDeGruposPrincipal { get; private set; }
+        public List<Tarefa> listaDeTarefasPrincipal { get; private set; }
+        public List<NotaAlunoTarefa> listaDeNotasPrincipal { get; private set; }
 
         private Perfil? _perfilPage;
         private EditarPerfil? _editarPerfilPage;
@@ -57,6 +57,10 @@ namespace FinalLab
         public MainWindow()
         {
             InitializeComponent();
+            listaDeAlunosPrincipal = App.Alunos;
+            listaDeGruposPrincipal = App.Grupos;
+            listaDeTarefasPrincipal = App.Tarefas; // Inicialização corrigida
+            listaDeNotasPrincipal = App.Notas;     // Inicialização corrigida
             DataContext = this;
 
             _nomePerfilEditavelBackingField = _nomeUtilizadorSistema; // Re-inicializa
@@ -65,14 +69,14 @@ namespace FinalLab
             try
             {
                 SetupAlunosView();
-                SetupTarefasView(); // Adicionar chamada
-                SetupGruposView();  // Adicionar chamada
+                SetupTarefasView();
+                SetupGruposView();
 
                 StaticPropertyChanged += OnStaticPropertyChanged;
                 UpdateDisplayedUserNameAndProfilePage();
                 UpdateUserProfilePictureEverywhere();
                 NavigateToPage("Tarefas");
-                AtualizarContadoresSumario(); // Adicionar chamada
+                AtualizarContadoresSumario();
                 Debug.WriteLine("MainWindow inicializada com sucesso.");
             }
             catch (Exception ex) { HandleFatalError(ex, "inicialização da MainWindow"); }
@@ -185,7 +189,42 @@ namespace FinalLab
         private void SetupGruposView() { if (_gruposGrid == null) { _gruposGrid = new Grid(); var sv = new ScrollViewer { VerticalScrollBarVisibility = ScrollBarVisibility.Auto }; _gruposGrid.Children.Add(sv); } AtualizarTabelaDeGruposUI(); }
         private void AtualizarTabelaDeGruposUI() { if (_gruposGrid == null || !(_gruposGrid.Children.OfType<ScrollViewer>().FirstOrDefault() is ScrollViewer sv)) return; var tab = new Grid { Margin = new Thickness(0, 5, 0, 0) }; sv.Content = tab; string[] headers = { "Nome Grupo", "Alunos", "Ações" }; double[] widths = { 1.5, 3, 0 }; bool[] isStar = { true, true, false }; for (int i = 0; i < headers.Length; i++) { tab.ColumnDefinitions.Add(new ColumnDefinition { Width = isStar[i] ? new GridLength(widths[i], GridUnitType.Star) : GridLength.Auto }); tab.Children.Add(CreateTableCellUI(headers[i], true, 0, i)); } tab.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto }); int rIdx = 1; foreach (var grp in listaDeGruposPrincipal.OrderBy(g => g.Nome)) { tab.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto }); tab.Children.Add(CreateTableCellUI(grp.Nome ?? "", false, rIdx, 0)); string alunos = string.Join(Environment.NewLine, grp.AlunosDoGrupo.Select(a => a.NomeCompleto ?? "N/A").OrderBy(n => n)); if (string.IsNullOrEmpty(alunos)) alunos = "(Vazio)"; var tbAlunos = new TextBlock { Text = alunos, TextWrapping = TextWrapping.Wrap, VerticalAlignment = VerticalAlignment.Top, Padding = new Thickness(5) }; tab.Children.Add(CreateTableCellUI(tbAlunos, false, rIdx, 1)); var btnEdit = new Button { Content = "Editar", Tag = grp, Margin = new Thickness(2), Style = (Style)FindResource("ActionButtonStyle") }; btnEdit.Click += EditarGrupoButton_Click; var btnDel = new Button { Content = "Apagar", Tag = grp, Margin = new Thickness(2), Style = (Style)FindResource("ActionButtonStyle"), Background = Brushes.IndianRed }; btnDel.Click += ApagarGrupoButton_Click; var spAcoes = new StackPanel { Orientation = Orientation.Horizontal }; spAcoes.Children.Add(btnEdit); spAcoes.Children.Add(btnDel); tab.Children.Add(CreateTableCellUI(spAcoes, false, rIdx, 2)); rIdx++; } AtualizarContadoresSumario(); }
         private void CriarGrupoButton_Global_Click(object s, RoutedEventArgs e) { try { var win = new CriarGrupoWindow(new List<Aluno>(listaDeAlunosPrincipal)) { Owner = this }; if (win.ShowDialog() == true && win.GrupoCriadoEditado != null) { Grupo novoGrp = win.GrupoCriadoEditado; if (listaDeGruposPrincipal.Any(g => g.Nome.Equals(novoGrp.Nome, StringComparison.OrdinalIgnoreCase))) { MessageBox.Show("Grupo já existe.", "Duplicado", MessageBoxButton.OK, MessageBoxImage.Warning); return; } listaDeGruposPrincipal.Add(novoGrp); foreach (var al in novoGrp.AlunosDoGrupo) { Aluno? alPrinc = listaDeAlunosPrincipal.FirstOrDefault(a => a.NumeroAluno == al.NumeroAluno); if (alPrinc != null) AssociarAlunoAGrupo(alPrinc, novoGrp.Nome); } AtualizarTabelaDeGruposUI(); AtualizarTabelaDeAlunosUI(); } } catch (Exception ex) { HandleClickError(ex, "CriarGrupo"); } }
-        private void EditarGrupoButton_Click(object s, RoutedEventArgs e) { try { if (s is Button { Tag: Grupo grpOrig }) { var win = new CriarGrupoWindow(new Grupo(grpOrig.Id, grpOrig.Nome, new ObservableCollection<Aluno>(grpOrig.AlunosDoGrupo)), new List<Aluno>(listaDeAlunosPrincipal)) { Owner = this, Title = "Editar Grupo" }; if (win.ShowDialog() == true && win.GrupoCriadoEditado != null) { Grupo grpEdit = win.GrupoCriadoEditado; if (!grpOrig.Nome.Equals(grpEdit.Nome, StringComparison.OrdinalIgnoreCase) && listaDeGruposPrincipal.Any(g => g.Id != grpOrig.Id && g.Nome.Equals(grpEdit.Nome, StringComparison.OrdinalIgnoreCase))) { MessageBox.Show("Nome de grupo já existe.", "Duplicado", MessageBoxButton.OK, MessageBoxImage.Warning); return; } grpOrig.Nome = grpEdit.Nome; var alsSairam = grpOrig.AlunosDoGrupo.Where(aO => !grpEdit.AlunosDoGrupo.Any(aE => aE.NumeroAluno == aO.NumeroAluno)).ToList(); foreach (var alS in alsSairam) AssociarAlunoAGrupo(alS, null); foreach (var alE in grpEdit.AlunosDoGrupo) { Aluno? alP = listaDeAlunosPrincipal.FirstOrDefault(a => a.NumeroAluno == alE.NumeroAluno); if (alP != null) AssociarAlunoAGrupo(alP, grpOrig.Nome); } AtualizarTabelaDeGruposUI(); AtualizarTabelaDeAlunosUI(); } } } catch (Exception ex) { HandleClickError(ex, "EditarGrupo"); } }
+        private void EditarGrupoButton_Click(object s, RoutedEventArgs e)
+        {
+            try
+            {
+                if (s is Button { Tag: Grupo grpOrig })
+                {
+                    var win = new CriarGrupoWindow(
+                        new Grupo(grpOrig.Id, grpOrig.Nome, grpOrig.AlunosDoGrupo.ToList()),
+                        new List<Aluno>(listaDeAlunosPrincipal)
+                    )
+                    { Owner = this, Title = "Editar Grupo" };
+
+                    if (win.ShowDialog() == true && win.GrupoCriadoEditado != null)
+                    {
+                        Grupo grpEdit = win.GrupoCriadoEditado;
+                        if (!grpOrig.Nome.Equals(grpEdit.Nome, StringComparison.OrdinalIgnoreCase) &&
+                            listaDeGruposPrincipal.Any(g => g.Id != grpOrig.Id && g.Nome.Equals(grpEdit.Nome, StringComparison.OrdinalIgnoreCase)))
+                        {
+                            MessageBox.Show("Nome de grupo já existe.", "Duplicado", MessageBoxButton.OK, MessageBoxImage.Warning);
+                            return;
+                        }
+                        grpOrig.Nome = grpEdit.Nome;
+                        var alsSairam = grpOrig.AlunosDoGrupo.Where(aO => !grpEdit.AlunosDoGrupo.Any(aE => aE.NumeroAluno == aO.NumeroAluno)).ToList();
+                        foreach (var alS in alsSairam) AssociarAlunoAGrupo(alS, null);
+                        foreach (var alE in grpEdit.AlunosDoGrupo)
+                        {
+                            Aluno? alP = listaDeAlunosPrincipal.FirstOrDefault(a => a.NumeroAluno == alE.NumeroAluno);
+                            if (alP != null) AssociarAlunoAGrupo(alP, grpOrig.Nome);
+                        }
+                        AtualizarTabelaDeGruposUI();
+                        AtualizarTabelaDeAlunosUI();
+                    }
+                }
+            }
+            catch (Exception ex) { HandleClickError(ex, "EditarGrupo"); }
+        }
         private void ApagarGrupoButton_Click(object s, RoutedEventArgs e) { try { if (s is Button { Tag: Grupo grpDel } && MessageBox.Show($"Apagar '{grpDel.Nome}'?", "Confirmar", MessageBoxButton.YesNo, MessageBoxImage.Warning) == MessageBoxResult.Yes) { foreach (var al in grpDel.AlunosDoGrupo.ToList()) AssociarAlunoAGrupo(al, null); listaDeGruposPrincipal.Remove(grpDel); AtualizarTabelaDeGruposUI(); AtualizarTabelaDeAlunosUI(); } } catch (Exception ex) { HandleClickError(ex, "ApagarGrupo"); } }
 
         private FrameworkElement CreateTableCellUI(object? content, bool isHeader = false, int r = 0, int c = 0) { FrameworkElement el; if (content is string txt) el = new TextBlock { Text = txt, Padding = new Thickness(5), VerticalAlignment = VerticalAlignment.Center, TextWrapping = TextWrapping.Wrap }; else if (content is FrameworkElement fe) { el = fe; if (el is TextBlock txb && txb.Text.Contains(Environment.NewLine)) txb.VerticalAlignment = VerticalAlignment.Top; else if (el is TextBlock tb) tb.VerticalAlignment = VerticalAlignment.Center; } else el = new TextBlock { Text = content?.ToString() ?? "", Padding = new Thickness(5), VerticalAlignment = VerticalAlignment.Center, TextWrapping = TextWrapping.Wrap }; var brd = new Border { BorderBrush = Brushes.LightGray, Child = el, Background = isHeader ? Brushes.LightSteelBlue : Brushes.Transparent }; string? hTxt = (el as TextBlock)?.Text; if (isHeader && hTxt == "Ações" && (c == 4 || c == 5 || c == 2)) brd.BorderThickness = new Thickness(0, 0, 0, 1); else brd.BorderThickness = new Thickness(0, 0, 1, 1); if (isHeader && el is TextBlock htb) { htb.FontWeight = FontWeights.Bold; htb.HorizontalAlignment = HorizontalAlignment.Center; } Grid.SetRow(brd, r); Grid.SetColumn(brd, c); return brd; }

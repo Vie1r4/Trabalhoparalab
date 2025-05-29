@@ -10,30 +10,37 @@ namespace FinalLab.Models
     public class Grupo : INotifyPropertyChanged
     {
         private static int _nextIdCounter = 1;
-        public string Id { get; private set; } // String ID
 
-        private string _nome = default!;
+        // Propriedades públicas para serialização
+        public string Id { get; set; } = string.Empty;
+
+        private string _nome = string.Empty;
         public string Nome
         {
             get => _nome;
             set
-            { /* ... (setter com validação e OnPropertyChanged) ... */
-                if (string.IsNullOrWhiteSpace(value)) throw new ArgumentException("Nome do grupo não pode ser vazio.", nameof(Nome));
-                if (_nome != value) { _nome = value; OnPropertyChanged(nameof(Nome)); }
+            {
+                if (string.IsNullOrWhiteSpace(value))
+                    throw new ArgumentException("Nome do grupo não pode ser vazio.", nameof(Nome));
+                if (_nome != value)
+                {
+                    _nome = value;
+                    OnPropertyChanged(nameof(Nome));
+                }
             }
         }
 
-        private ObservableCollection<Aluno> _alunosDoGrupo = new ObservableCollection<Aluno>();
-        public ObservableCollection<Aluno> AlunosDoGrupo
-        {
-            get => _alunosDoGrupo;
-            set { if (_alunosDoGrupo != value) { _alunosDoGrupo = value; OnPropertyChanged(nameof(AlunosDoGrupo)); } }
-        }
+        // Usar List<Aluno> para facilitar a serialização
+        public List<Aluno> AlunosDoGrupo { get; set; } = new();
 
-        // Construtor principal para novos grupos (gera ID numérico como string)
+        // Construtor sem parâmetros para serialização
+        public Grupo() { }
+
+        // Construtor principal para uso na aplicação
         public Grupo(string nome)
         {
-            if (string.IsNullOrWhiteSpace(nome)) throw new ArgumentException("Nome do grupo não pode ser vazio.", nameof(nome));
+            if (string.IsNullOrWhiteSpace(nome))
+                throw new ArgumentException("Nome do grupo não pode ser vazio.", nameof(nome));
 
             // Se o nome for "Todos os Grupos", usa o ID especial definido em Pauta.
             // Caso contrário, gera um novo ID.
@@ -50,11 +57,11 @@ namespace FinalLab.Models
 
         // Construtor para casos onde o ID já é conhecido (ex: placeholder "Todos os Grupos" com ID fixo)
         // Ou para recriar objetos se necessário (embora sem persistência, menos comum)
-        internal Grupo(string id, string nome, ObservableCollection<Aluno>? alunos = null)
+        public Grupo(string id, string nome, List<Aluno>? alunos = null)
         {
             Id = id;
             Nome = nome;
-            AlunosDoGrupo = alunos ?? new ObservableCollection<Aluno>();
+            AlunosDoGrupo = alunos ?? new List<Aluno>();
             // Não incrementa _nextIdCounter se o ID for de um placeholder conhecido
             // ou se estivermos a recriar um grupo com ID já existente.
             if (int.TryParse(id, out int numericId) && numericId >= _nextIdCounter)
@@ -63,11 +70,40 @@ namespace FinalLab.Models
             }
         }
 
-        public void AdicionarAluno(Aluno aluno) { /* ... (código como antes) ... */ ArgumentNullException.ThrowIfNull(aluno); if (!_alunosDoGrupo.Any(a => a.NumeroAluno == aluno.NumeroAluno)) { _alunosDoGrupo.Add(aluno); OnPropertyChanged(nameof(AlunosDoGrupo)); } }
-        public void RemoverAluno(Aluno aluno) { /* ... (código como antes) ... */ ArgumentNullException.ThrowIfNull(aluno); var al = _alunosDoGrupo.FirstOrDefault(a => a.NumeroAluno == aluno.NumeroAluno); if (al != null) { _alunosDoGrupo.Remove(al); OnPropertyChanged(nameof(AlunosDoGrupo)); } }
-        public void LimparAlunos() { if (_alunosDoGrupo.Any()) { _alunosDoGrupo.Clear(); OnPropertyChanged(nameof(AlunosDoGrupo)); } }
+        public void AdicionarAluno(Aluno aluno)
+        {
+            ArgumentNullException.ThrowIfNull(aluno);
+            if (!AlunosDoGrupo.Exists(a => a.NumeroAluno == aluno.NumeroAluno))
+            {
+                AlunosDoGrupo.Add(aluno);
+                OnPropertyChanged(nameof(AlunosDoGrupo));
+            }
+        }
+
+        public void RemoverAluno(Aluno aluno)
+        {
+            ArgumentNullException.ThrowIfNull(aluno);
+            var al = AlunosDoGrupo.Find(a => a.NumeroAluno == aluno.NumeroAluno);
+            if (al != null)
+            {
+                AlunosDoGrupo.Remove(al);
+                OnPropertyChanged(nameof(AlunosDoGrupo));
+            }
+        }
+
+        public void LimparAlunos()
+        {
+            if (AlunosDoGrupo.Count > 0)
+            {
+                AlunosDoGrupo.Clear();
+                OnPropertyChanged(nameof(AlunosDoGrupo));
+            }
+        }
 
         public event PropertyChangedEventHandler? PropertyChanged;
-        protected virtual void OnPropertyChanged(string propertyName) { PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName)); }
+        protected virtual void OnPropertyChanged(string propertyName)
+        {
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+        }
     }
 }

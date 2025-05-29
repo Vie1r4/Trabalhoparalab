@@ -6,9 +6,9 @@ namespace FinalLab.Models
 {
     public class NotaAlunoTarefa : INotifyPropertyChanged
     {
-        // Chaves não devem mudar após criação, então podem ser readonly properties
-        public string NumeroAluno { get; }
-        public int IdTarefa { get; }
+        // Propriedades públicas para serialização
+        public string NumeroAluno { get; set; } = string.Empty;
+        public int IdTarefa { get; set; }
 
         private double? _valor;
         public double? Valor
@@ -70,6 +70,14 @@ namespace FinalLab.Models
             }
         }
 
+        // Construtor sem parâmetros para serialização
+        public NotaAlunoTarefa()
+        {
+            _dataAtribuicao = DateTime.Now;
+            _atribuidaViaGrupo = false;
+        }
+
+        // Construtor principal para uso na aplicação
         public NotaAlunoTarefa(string numeroAluno, int idTarefa)
         {
             if (string.IsNullOrWhiteSpace(numeroAluno))
