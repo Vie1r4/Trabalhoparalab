@@ -196,7 +196,7 @@ namespace FinalLab
                 if (s is Button { Tag: Grupo grpOrig })
                 {
                     var win = new CriarGrupoWindow(
-                        new Grupo(grpOrig.Id, grpOrig.Nome, grpOrig.AlunosDoGrupo.ToList()),
+                        new Grupo(grpOrig.Id, grpOrig.Nome, new ObservableCollection<Aluno>(grpOrig.AlunosDoGrupo)),
                         new List<Aluno>(listaDeAlunosPrincipal)
                     )
                     { Owner = this, Title = "Editar Grupo" };
@@ -234,5 +234,16 @@ namespace FinalLab
         protected virtual void OnPropertyChanged(string prop) { PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(prop)); }
 
     } // Fim da classe MainWindow
+      // Add the following properties to the App class to define Alunos, Grupos, Tarefas, and Notas.
+
+    public partial class App : Application
+    {
+        public static List<Aluno> Alunos { get; private set; } = new List<Aluno>();
+        public static List<Grupo> Grupos { get; private set; } = new List<Grupo>();
+        public static List<Tarefa> Tarefas { get; private set; } = new List<Tarefa>();
+        public static List<NotaAlunoTarefa> Notas { get; private set; } = new List<NotaAlunoTarefa>();
+
+        // You can initialize these lists with data if needed in the Application_Startup method.
+    }
 } // Fim do namespace FinalLab
 
